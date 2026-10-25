@@ -1,0 +1,16 @@
+{
+  "name": "naqsh-e-noor",
+  "version": "1.0.0",
+  "description": "Naqsh e Noor — Luxury Embroidered Collection",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
+    "dotenv": "^18.0.8"
+  }
+}

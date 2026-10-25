@@ -1,0 +1,22 @@
+{
+  "whatsapp": "923077536327",
+  "brandName": "AB INDUSTRY",
+  "tagline": "WEAR YOUR STYLE",
+  "instagram": "@abindustry",
+  "currency": "$",
+  "freeDeliveryNotice": "Worldwide express delivery in 3-5 business days",
+  "announcement": "✨ FREE EXPRESS DELIVERY ON ALL ORDERS · ORDER ONLINE & ON WHATSAPP",
+  "adminPin": "1423",
+  "categories": [
+    {
+      "id": "new",
+      "name": "MEN’S COLLECTION",
+      "badge": "MEN"
+    },
+    {
+      "id": "sig",
+      "name": "WOMEN’S COLLECTION",
+      "badge": "WOMEN"
+    }
+  ]
+}

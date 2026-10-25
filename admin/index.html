@@ -1,0 +1,2059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>AB INDUSTRY — Executive Admin Management Portal</title>
+    <base href="/">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --gold: #c99a00;
+            --gold-light: #fbf5e6;
+            --ruby: #9b111e;
+            --ruby-light: #fbebee;
+            --ink: #161616;
+            --ink-light: #2c2c2c;
+            --cream: #faf7f2;
+            --card-bg: #ffffff;
+            --border: #e8e3dc;
+            --mut: #7a7a7a;
+            --success: #1b873f;
+            --radius: 8px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--cream);
+            color: var(--ink);
+            font-family: 'Jost', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+
+        /* Top Header */
+        header {
+            background: var(--ink);
+            color: #fff;
+            padding: 16px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid var(--gold);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .brand-wrap {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .brand {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 26px;
+            letter-spacing: .24em;
+            font-weight: 600;
+            color: #fff;
+            text-decoration: none;
+        }
+        .brand small {
+            display: block;
+            font-family: 'Jost', sans-serif;
+            font-size: 9px;
+            letter-spacing: .4em;
+            color: var(--gold);
+            margin-top: 2px;
+        }
+        .badge-portal {
+            background: rgba(201, 154, 0, 0.2);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            font-size: 11px;
+            letter-spacing: .12em;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .btn-view-store {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 18px;
+            font-size: 12px;
+            letter-spacing: .14em;
+            text-decoration: none;
+            transition: .25s;
+            border-radius: 4px;
+        }
+        .btn-view-store:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+        .btn-logout {
+            background: rgba(255,255,255,0.1);
+            color: #ffb3b8;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 14px;
+            font-size: 12px;
+            letter-spacing: .1em;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: .2s;
+        }
+        .btn-logout:hover {
+            background: var(--ruby);
+            color: #fff;
+            border-color: var(--ruby);
+        }
+
+        /* Layout */
+        .admin-container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 28px 24px 60px;
+            flex: 1;
+        }
+
+        /* Navigation Tabs */
+        .admin-nav {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: #fff;
+            border: 1px solid var(--border);
+            color: var(--ink);
+            padding: 10px 22px;
+            font-size: 13px;
+            letter-spacing: .12em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: .25s;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-btn.active {
+            background: var(--ink);
+            color: #fff;
+            border-color: var(--ink);
+        }
+        .tab-btn:hover:not(.active) {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--gold);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+        .stat-card h4 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .15em;
+            color: var(--mut);
+            margin-bottom: 8px;
+        }
+        .stat-card .val {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 36px;
+            font-weight: 600;
+            color: var(--ink);
+            line-height: 1;
+        }
+        .stat-card .sub {
+            font-size: 12px;
+            color: var(--mut);
+            margin-top: 6px;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 8px 16px;
+            flex: 1;
+            min-width: 260px;
+            max-width: 440px;
+        }
+        .search-box input {
+            border: 0;
+            outline: 0;
+            font-family: inherit;
+            font-size: 13px;
+            margin-left: 10px;
+            width: 100%;
+        }
+        .filter-select {
+            padding: 10px 16px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--ink);
+            outline: none;
+            cursor: pointer;
+        }
+        .btn-add {
+            background: var(--ink);
+            color: #fff;
+            border: 1px solid var(--ink);
+            padding: 10px 22px;
+            font-size: 13px;
+            letter-spacing: .12em;
+            font-weight: 500;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: .25s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-add:hover {
+            background: var(--gold);
+            border-color: var(--gold);
+        }
+
+        /* Table */
+        .table-wrap {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow-x: auto;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+        th {
+            background: #faf8f5;
+            padding: 14px 20px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .15em;
+            color: var(--mut);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f0ebe4;
+            vertical-align: middle;
+        }
+        tr:last-child td { border-bottom: 0; }
+        tr:hover td { background: #faf8f5; }
+
+        .prod-cell {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .prod-thumb-wrap {
+            position: relative;
+            width: 58px;
+            height: 74px;
+            flex-shrink: 0;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #f0ebe4;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+        .prod-thumb {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .thumb-badge-count {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            background: rgba(0,0,0,0.75);
+            color: #fff;
+            font-size: 9px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            line-height: 1;
+        }
+        .thumb-video-badge {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            background: var(--ruby);
+            color: #fff;
+            font-size: 8px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .prod-title {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--ink);
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+        .prod-sub {
+            font-size: 12px;
+            color: var(--mut);
+        }
+
+        .badge-tag {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: .1em;
+            padding: 4px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+        }
+        .b-new { background: #fdf5e2; color: #9c7526; border: 1px solid #f1ddb0; }
+        .b-sale { background: #fdebee; color: var(--ruby); border: 1px solid #f9ccd3; }
+        .b-low { background: #eee; color: #333; border: 1px solid #ddd; }
+
+        .btn-badge-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 14px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: .2s;
+            background: #eee;
+            color: #666;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+        .btn-badge-toggle.active-top {
+            background: #fff8e1;
+            color: #b78103;
+            border-color: #ffd54f;
+        }
+        .btn-badge-toggle.active-scroll {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-color: #a5d6a7;
+        }
+
+        .price-text {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .action-btns {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-action {
+            background: transparent;
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: .2s;
+            color: var(--ink);
+        }
+        .btn-action:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+        .btn-action.del:hover {
+            border-color: var(--ruby);
+            background: var(--ruby-light);
+            color: var(--ruby);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(18, 18, 18, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            visibility: hidden;
+            transition: .3s;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-box {
+            background: #fff;
+            width: 100%;
+            max-width: 950px;
+            max-height: 92vh;
+            border-radius: var(--radius);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: translateY(20px);
+            transition: transform .3s cubic-bezier(.2,.8,.2,1);
+        }
+        .modal-overlay.open .modal-box {
+            transform: translateY(0);
+        }
+        .modal-header {
+            padding: 20px 26px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #faf8f5;
+        }
+        .modal-header h3 {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 26px;
+            font-weight: 600;
+        }
+        .modal-close {
+            background: none;
+            border: 0;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--mut);
+            line-height: 1;
+        }
+        .modal-body {
+            padding: 26px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .modal-footer {
+            padding: 16px 26px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            background: #faf8f5;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .form-group.full {
+            grid-column: span 2;
+        }
+        .form-group label {
+            font-size: 11px;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #444;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 13px;
+            color: var(--ink);
+            outline: none;
+            transition: border .2s;
+            background: #fff;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: var(--gold);
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Toggle Options Box */
+        .feature-toggle-box {
+            background: #fbf9f5;
+            border: 1px solid #e7e0d5;
+            border-radius: 6px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--ink);
+        }
+        .checkbox-label input[type="checkbox"] {
+            margin-top: 3px;
+            width: 16px;
+            height: 16px;
+            accent-color: var(--ink);
+            cursor: pointer;
+        }
+        .checkbox-hint {
+            font-size: 11px;
+            color: var(--mut);
+            font-weight: 400;
+            margin-top: 2px;
+        }
+
+        /* Image & Video Field Styles */
+        .media-field-box {
+            background: var(--cream);
+            border: 1px dashed #d5cec5;
+            padding: 16px;
+            border-radius: 6px;
+        }
+        .upload-btn-wrap {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .btn-upload-file {
+            background: #fff;
+            border: 1px solid var(--border);
+            padding: 8px 14px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+        .btn-upload-file:hover { border-color: var(--gold); color: var(--gold); }
+
+        /* Multiple Gallery Pictures */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+        .gallery-item {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+        }
+        .gallery-item img {
+            width: 100%;
+            aspect-ratio: 3/4;
+            object-fit: cover;
+            border-radius: 4px;
+            background: #f7f7f7;
+        }
+        .gallery-item input {
+            padding: 4px 6px;
+            font-size: 11px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        .gallery-item .btn-remove-gal {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(155, 17, 30, 0.85);
+            color: #fff;
+            border: 0;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Video Preview Box */
+        .video-preview-wrap {
+            margin-top: 12px;
+            display: none;
+            background: #111;
+            border-radius: 6px;
+            overflow: hidden;
+            max-width: 320px;
+            position: relative;
+        }
+        .video-preview-wrap video, .video-preview-wrap iframe {
+            width: 100%;
+            height: 180px;
+            display: block;
+        }
+        .btn-remove-video {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--ruby);
+            color: #fff;
+            border: 0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            z-index: 5;
+        }
+
+        /* Settings Card */
+        .settings-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+        }
+        .settings-card h3 {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 28px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+        }
+
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--ink);
+            color: #fff;
+            padding: 14px 24px;
+            border-radius: 6px;
+            font-size: 13px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: .3s;
+            pointer-events: none;
+            border-left: 4px solid var(--gold);
+        }
+        #toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Passcode Modal */
+        #authModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(18, 18, 18, 0.88);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .auth-box {
+            background: #fff;
+            width: 100%;
+            max-width: 420px;
+            padding: 36px 30px;
+            border-radius: var(--radius);
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border-top: 4px solid var(--gold);
+        }
+        .auth-box h2 {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 32px;
+            margin-bottom: 6px;
+        }
+        .auth-box p {
+            color: var(--mut);
+            font-size: 13px;
+            margin-bottom: 24px;
+        }
+        .auth-box input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 18px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            text-align: center;
+            letter-spacing: .25em;
+            margin-bottom: 18px;
+            outline: none;
+        }
+        .auth-box button {
+            width: 100%;
+            background: var(--ink);
+            color: #fff;
+            border: 0;
+            padding: 14px;
+            font-size: 13px;
+            letter-spacing: .16em;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: .25s;
+        }
+        .auth-box button:hover { background: var(--gold); }
+
+        @media(max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .form-group.full { grid-column: span 1; }
+            header { flex-direction: column; gap: 14px; text-align: center; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Passcode Gate -->
+<div id="authModal">
+    <div class="auth-box">
+        <div style="color:var(--gold); font-size:32px; margin-bottom:10px;">✦</div>
+        <h2>AB INDUSTRY</h2>
+        <p>Admin Security Gate — Enter Password to Unlock</p>
+        <input type="password" id="pinInput" placeholder="••••" autofocus autocomplete="off">
+        <button id="pinSubmitBtn">UNLOCK ADMIN PORTAL</button>
+        <div id="authErr" style="color:var(--ruby); font-size:12px; margin-top:10px; display:none;">Invalid Password. (Default: 1423)</div>
+    </div>
+</div>
+
+<header>
+    <div class="brand-wrap">
+        <a href="/" class="brand" id="headerBrand">AB INDUSTRY<small>EXECUTIVE ADMIN PORTAL</small></a>
+        <span class="badge-portal">LIVE CATALOG CMS</span>
+    </div>
+    <div class="header-actions">
+        <a href="/" target="_blank" class="btn-view-store">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            VIEW STOREFRONT
+        </a>
+        <button class="btn-logout" id="logoutBtn" title="Logout and lock portal">🔒 LOGOUT</button>
+    </div>
+</header>
+
+<main class="admin-container">
+    <!-- Navigation Tabs -->
+    <div class="admin-nav">
+        <button class="tab-btn active" data-view="products">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            ALL PRODUCTS (<span id="prodCountBadge">0</span>)
+        </button>
+        <button class="tab-btn" data-view="categories">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            CATEGORIES (<span id="catCountBadge">0</span>)
+        </button>
+        <button class="tab-btn" data-view="settings">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            STORE &amp; WHATSAPP
+        </button>
+        <button class="tab-btn" data-view="security">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            CHANGE PASSWORD
+        </button>
+        <button class="tab-btn" data-view="database">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+            DATABASE / SUPABASE
+        </button>
+    </div>
+
+    <!-- PRODUCTS VIEW -->
+    <div id="viewProducts">
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h4>Total Products</h4>
+                <div class="val" id="statTotal">0</div>
+                <div class="sub">Across all store collections</div>
+            </div>
+            <div class="stat-card" style="border-left-color: #f59e0b;">
+                <h4>Top Pinned Products</h4>
+                <div class="val" id="statTopPos">0</div>
+                <div class="sub">Displayed at first position</div>
+            </div>
+            <div class="stat-card" style="border-left-color: #10b981;">
+                <h4>Scroll Stage Showcase</h4>
+                <div class="val" id="statScrollStage">0</div>
+                <div class="sub">Swinging on wire carousel</div>
+            </div>
+            <div class="stat-card" style="border-left-color: #25d366;">
+                <h4>WhatsApp Order Phone</h4>
+                <div class="val" style="font-size: 22px;" id="statWhatsApp">+92 307 7536327</div>
+                <div class="sub">1-Click WhatsApp buy destination</div>
+            </div>
+        </div>
+
+        <!-- Action Toolbar -->
+        <div class="toolbar">
+            <div class="search-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="searchInput" placeholder="Search by title, fabric, or description...">
+            </div>
+            <select class="filter-select" id="catFilter">
+                <option value="all">All Categories</option>
+            </select>
+            <button class="btn-add" id="openAddModalBtn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                ADD NEW PRODUCT
+            </button>
+        </div>
+
+        <!-- Products Table -->
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 36%;">Product &amp; Media</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Showcase Toggles</th>
+                        <th>Badge &amp; Stock</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="productsTableBody">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- CATEGORIES MANAGEMENT VIEW -->
+    <div id="viewCategories" style="display: none;">
+        <div style="display: grid; grid-template-columns: 360px 1fr; gap: 24px;">
+            <!-- Create Category Card -->
+            <div class="settings-card" style="margin: 0; max-width: 100%;">
+                <h3>Create New Category</h3>
+                <form id="categoryForm">
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label>Category Display Name *</label>
+                        <input type="text" id="catNameInput" required placeholder="e.g. HOODIES &amp; TEES">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label>Category Code / Slug *</label>
+                        <input type="text" id="catSlugInput" required placeholder="e.g. hoodies">
+                        <small style="color:var(--mut); font-size:11px;">Unique identifier used internally (lowercase, no spaces)</small>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label>Badge / Tag Label (Optional)</label>
+                        <input type="text" id="catBadgeInput" placeholder="e.g. HOT, NEW, SALE">
+                    </div>
+                    <button type="submit" class="btn-add" style="width: 100%; justify-content: center;">
+                        + ADD CATEGORY
+                    </button>
+                </form>
+            </div>
+
+            <!-- Existing Categories Table -->
+            <div class="table-wrap" style="align-self: flex-start;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Category Display Name</th>
+                            <th>Code / Slug</th>
+                            <th>Badge</th>
+                            <th>Product Count</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="categoriesTableBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS VIEW -->
+    <div id="viewSettings" style="display: none;">
+        <div class="settings-card">
+            <h3>Storefront &amp; WhatsApp Settings</h3>
+            <form id="settingsForm">
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label>WhatsApp Order Number (without + or spaces) *</label>
+                        <input type="text" id="setWhatsApp" required placeholder="e.g. 923077536327">
+                        <small style="color:var(--mut); font-size:11px;">Format: Country Code + Number (e.g. 923077536327 for Pakistan)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Brand Name</label>
+                        <input type="text" id="setBrandName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tagline</label>
+                        <input type="text" id="setTagline" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Instagram Handle</label>
+                        <input type="text" id="setInstagram" placeholder="@abindustry">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Currency / Price Prefix</label>
+                        <input type="text" id="setCurrency" placeholder="Rs">
+                    </div>
+
+                    <div class="form-group full">
+                        <label>Announcement Bar Text</label>
+                        <input type="text" id="setAnnouncement" placeholder="✨ FREE DELIVERY ACROSS PAKISTAN · ORDER ON WHATSAPP">
+                    </div>
+                </div>
+
+                <div style="margin-top: 24px; display:flex; justify-content:space-between; align-items:center;">
+                    <button type="submit" class="btn-add" style="padding:12px 30px;">SAVE SETTINGS</button>
+                    <button type="button" id="btnTestWhatsApp" class="btn-action" style="padding:10px 18px;">TEST WHATSAPP LINK</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CHANGE PASSWORD & SECURITY VIEW -->
+    <div id="viewSecurity" style="display: none;">
+        <div class="settings-card" style="max-width: 520px;">
+            <h3>Change Admin Password</h3>
+            <p style="color:var(--mut); font-size:13px; margin-bottom: 22px;">
+                You can change the admin portal password anytime. Default password is <b>1423</b>.
+            </p>
+            <form id="passwordForm">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label>Current Admin Password *</label>
+                    <input type="password" id="curPassword" required placeholder="Enter current password (1423)">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label>New Admin Password *</label>
+                    <input type="password" id="newPassword" required placeholder="Enter new password">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label>Confirm New Password *</label>
+                    <input type="password" id="confirmPassword" required placeholder="Confirm new password">
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <button type="submit" class="btn-add" style="padding:12px 28px;">UPDATE PASSWORD</button>
+                    <button type="button" id="toggleShowPassBtn" class="btn-action">👁️ Show/Hide</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DATABASE & SUPABASE VIEW -->
+    <div id="viewDatabase" style="display: none;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <!-- Connection Settings -->
+            <div class="settings-card" style="margin: 0; max-width: 100%;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                    <h3 style="margin:0;">Supabase Database</h3>
+                    <span id="dbStatusPill" style="font-size:11px; font-weight:600; padding:4px 10px; border-radius:12px; background:#e5e7eb; color:#374151;">CHECKING...</span>
+                </div>
+                <p style="color:var(--mut); font-size:13px; margin-bottom: 20px;">
+                    Connect your free cloud database from <a href="https://supabase.com" target="_blank" style="color:var(--gold); font-weight:600;">Supabase.com</a>.
+                </p>
+                <form id="dbConfigForm">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label>Supabase Project URL *</label>
+                        <input type="url" id="dbUrlInput" placeholder="https://xyzcompany.supabase.co" required>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label>Supabase Anon Public API Key *</label>
+                        <input type="text" id="dbKeyInput" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." required>
+                    </div>
+
+                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                        <button type="submit" class="btn-add" id="btnSaveDbConfig" style="padding:12px 24px;">SAVE &amp; CONNECT</button>
+                        <button type="button" class="btn-action" id="btnSyncDb" style="padding:12px 20px; background:var(--ink); color:#fff; border-color:var(--ink);">☁️ SYNC PRODUCTS TO SUPABASE</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- SQL Setup Guide -->
+            <div class="settings-card" style="margin: 0; max-width: 100%;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                    <h3 style="margin:0;">Supabase Setup Guide</h3>
+                    <button type="button" id="btnCopySql" class="btn-action" style="padding:6px 14px; font-size:12px;">📋 COPY SQL</button>
+                </div>
+                <ol style="font-size:13px; color:#555; line-height:1.8; padding-left:18px; margin-bottom:16px;">
+                    <li>Log in to <a href="https://supabase.com/dashboard" target="_blank" style="color:var(--gold); font-weight:600;">supabase.com</a> and create a project.</li>
+                    <li>Go to the left menu: <b>SQL Editor</b> -> <b>+ New query</b>.</li>
+                    <li>Click <b>COPY SQL</b> button above, paste it in the query box, and click <b>Run</b>.</li>
+                    <li>Go to <b>Project Settings</b> -> <b>API</b>, copy your <b>Project URL</b> and <b>anon public key</b>, paste them on the left and click <b>Save &amp; Connect</b>.</li>
+                    <li>Click <b>SYNC PRODUCTS TO SUPABASE</b> to immediately push all catalog items!</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Add / Edit Product Modal -->
+<div class="modal-overlay" id="productModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="modalTitle">Add New Product</h3>
+            <button class="modal-close" id="closeModalBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="productForm">
+                <input type="hidden" id="editProdId">
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label>Product Title / Name *</label>
+                        <input type="text" id="pName" required placeholder="e.g. Men’s Set: Hoodie + Baggy Jeans">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Price in USD ($) *</label>
+                        <input type="text" id="pPrice" required placeholder="e.g. 59.99 or $65.00">
+                        <small style="color:var(--mut); font-size:11px;">Enter dollar price. Customers see this in $ with Add to Cart.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Available Sizes</label>
+                        <input type="text" id="pSizes" placeholder="e.g. S, M, L, XL, XXL">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Category *</label>
+                        <div style="display: flex; gap: 8px;">
+                            <select id="pCat" style="flex:1;">
+                                <!-- Populated dynamically from categories -->
+                            </select>
+                            <button type="button" id="btnQuickAddCat" class="btn-action" title="Quick add category">+ New</button>
+                        </div>
+                    </div>
+
+                    <!-- Scroll & Top Position Toggles -->
+                    <div class="form-group full">
+                        <div class="feature-toggle-box">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="pInScroll" checked>
+                                <div>
+                                    <span>🎡 Show in Hanging Wire Scroll Showcase</span>
+                                    <div class="checkbox-hint">If checked, this item swings on the interactive 3D clothes wire at the top. If unchecked, it only appears in the full catalog grid.</div>
+                                </div>
+                            </label>
+
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="pTopPosition">
+                                <div>
+                                    <span>⭐ Pin to Top Position (Show First)</span>
+                                    <div class="checkbox-hint">If checked, this product will be prioritized at position #1 in both the showcase carousel and catalog grid.</div>
+                                </div>
+                            </label>
+
+                            <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
+                                <label style="font-size: 11px; text-transform: uppercase; letter-spacing: .1em; font-weight: 600; color:#555;">Display Order Number:</label>
+                                <input type="number" id="pSortOrder" value="1" min="1" max="999" style="width: 80px; padding: 6px 10px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Badge Label (Optional)</label>
+                        <input type="text" id="pBadge" placeholder="e.g. NEW, SET, 2 COLOURS, -20%">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Badge Color Theme</label>
+                        <select id="pBadgeClass">
+                            <option value="b-new">Gold / Amber (New / Featured)</option>
+                            <option value="b-sale">Ruby Red (Discount / Sale / Set)</option>
+                            <option value="b-low">Ink Black (Limited / Colours)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Fabric Type</label>
+                        <input type="text" id="pFabric" placeholder="e.g. Premium Cotton Fleece &amp; Denim">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Pieces / Set</label>
+                        <input type="text" id="pPieces" placeholder="e.g. 2 Piece Set, Hoodie only">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Stock Status</label>
+                        <select id="pStock">
+                            <option value="In Stock">In Stock</option>
+                            <option value="Only 2 Left">Only 2 Left</option>
+                            <option value="Only 3 Left">Only 3 Left</option>
+                            <option value="Pre-Order">Pre-Order</option>
+                        </select>
+                    </div>
+
+                    <!-- Main Cover Photo -->
+                    <div class="form-group full media-field-box">
+                        <label>Main Front Image (Primary Photo) *</label>
+                        <input type="text" id="pImgUrl" required placeholder="Image path, URL, or upload below">
+                        <div class="upload-btn-wrap">
+                            <label class="btn-upload-file">
+                                📁 Upload Front Image
+                                <input type="file" id="frontFileInput" accept="image/*" style="display:none;">
+                            </label>
+                            <span id="frontUploadStatus" style="font-size:12px; color:var(--mut); align-self:center;"></span>
+                        </div>
+                        <div class="img-preview-box" style="display:flex; align-items:center; gap:12px; margin-top:8px;">
+                            <img id="frontPreview" src="assets/images/sage1.jpg" alt="Front Preview" style="width:60px; height:80px; object-fit:cover; border-radius:4px; border:1px solid #ccc; background:#fff;">
+                            <span style="font-size:12px; color:var(--mut);">Primary photo shown on the hanging wire &amp; catalog card</span>
+                        </div>
+                    </div>
+
+                    <!-- Secondary / Back Photo -->
+                    <div class="form-group full media-field-box">
+                        <label>Secondary / Back Flip Image</label>
+                        <input type="text" id="pBackUrl" placeholder="Image path, URL, or upload below">
+                        <div class="upload-btn-wrap">
+                            <label class="btn-upload-file">
+                                📁 Upload Back / Look 2 Image
+                                <input type="file" id="backFileInput" accept="image/*" style="display:none;">
+                            </label>
+                            <span id="backUploadStatus" style="font-size:12px; color:var(--mut); align-self:center;"></span>
+                        </div>
+                        <div class="img-preview-box" style="display:flex; align-items:center; gap:12px; margin-top:8px;">
+                            <img id="backPreview" src="assets/images/sage2.jpg" alt="Back Preview" style="width:60px; height:80px; object-fit:cover; border-radius:4px; border:1px solid #ccc; background:#fff;">
+                            <span style="font-size:12px; color:var(--mut);">Used for 3D card tilt &amp; flip view in detail modal</span>
+                        </div>
+                    </div>
+
+                    <!-- Additional Gallery Pictures (Multiple Photos) -->
+                    <div class="form-group full media-field-box">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <label>Additional Gallery Pictures (Multiple Photos)</label>
+                            <span style="font-size:11px; color:var(--mut);">Add as many close-ups, angles &amp; details as needed</span>
+                        </div>
+                        <div class="upload-btn-wrap">
+                            <label class="btn-upload-file">
+                                📸 Select Multiple Images (Upload)
+                                <input type="file" id="multiFileInput" accept="image/*" multiple style="display:none;">
+                            </label>
+                            <button type="button" id="btnAddPhotoUrlBtn" class="btn-action">+ Add by URL</button>
+                            <span id="multiUploadStatus" style="font-size:12px; color:var(--mut); align-self:center;"></span>
+                        </div>
+                        <!-- Dynamic Gallery List -->
+                        <div class="gallery-grid" id="galleryContainer"></div>
+                    </div>
+
+                    <!-- Product Video Support -->
+                    <div class="form-group full media-field-box">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <label>Product Video (Optional)</label>
+                            <span style="font-size:11px; color:var(--mut);">MP4 file URL, uploaded video, or YouTube link</span>
+                        </div>
+                        <input type="text" id="pVideoUrl" placeholder="e.g. assets/videos/... or https://... or YouTube link">
+                        <div class="upload-btn-wrap">
+                            <label class="btn-upload-file">
+                                📹 Upload Video File (MP4/WebM)
+                                <input type="file" id="videoFileInput" accept="video/mp4,video/webm,video/*" style="display:none;">
+                            </label>
+                            <span id="videoUploadStatus" style="font-size:12px; color:var(--mut); align-self:center;"></span>
+                        </div>
+                        <!-- Video Preview Player -->
+                        <div class="video-preview-wrap" id="videoPreviewWrap">
+                            <button type="button" class="btn-remove-video" id="btnRemoveVideo">✕ Remove Video</button>
+                            <div id="videoPlayerContainer"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group full">
+                        <label>Product Description &amp; Details *</label>
+                        <textarea id="pDesc" required placeholder="Describe the style, fit, fabric quality, pockets, zipper, stitching, and washing instructions..."></textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-action" id="cancelModalBtn">Cancel</button>
+            <button type="button" class="btn-add" id="saveProductBtn">SAVE PRODUCT</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast">Changes saved successfully</div>
+
+<script>
+    let allProducts = [];
+    let currentSettings = {
+        whatsapp: '923077536327',
+        brandName: 'AB INDUSTRY',
+        tagline: 'WEAR YOUR STYLE',
+        adminPin: '1423',
+        categories: [
+            { id: 'new', name: 'MEN’S COLLECTION', badge: 'MEN' },
+            { id: 'sig', name: 'WOMEN’S COLLECTION', badge: 'WOMEN' }
+        ]
+    };
+
+    let currentGallery = []; // Array of { k: string, l: string }
+
+    // ================= AUTHENTICATION =================
+    const authModal = document.getElementById('authModal');
+    const pinInput = document.getElementById('pinInput');
+    const pinSubmitBtn = document.getElementById('pinSubmitBtn');
+    const authErr = document.getElementById('authErr');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    async function prefetchSettings() {
+        try {
+            const res = await fetch('/api/settings');
+            if (res.ok) {
+                const data = await res.json();
+                if (data && typeof data === 'object') {
+                    currentSettings = { ...currentSettings, ...data };
+                }
+            }
+        } catch (_) {}
+    }
+
+    function checkAuth() {
+        if (sessionStorage.getItem('naqsh_admin_auth') === 'true') {
+            authModal.style.display = 'none';
+            loadData();
+        } else {
+            authModal.style.display = 'flex';
+            prefetchSettings();
+        }
+    }
+
+    pinSubmitBtn.addEventListener('click', async () => {
+        const entered = pinInput.value.trim();
+        await prefetchSettings();
+        const correctPin = currentSettings.adminPin || '1423';
+        if (entered === correctPin) {
+            sessionStorage.setItem('naqsh_admin_auth', 'true');
+            authModal.style.display = 'none';
+            authErr.style.display = 'none';
+            loadData();
+            showToast('Welcome to AB Industry Admin Portal');
+        } else {
+            authErr.style.display = 'block';
+            pinInput.focus();
+        }
+    });
+
+    pinInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') pinSubmitBtn.click();
+    });
+
+    logoutBtn.addEventListener('click', () => {
+        sessionStorage.removeItem('naqsh_admin_auth');
+        pinInput.value = '';
+        authModal.style.display = 'flex';
+        showToast('Logged out of Admin Portal');
+    });
+
+    // ================= DATA LOADING =================
+    async function loadData() {
+        try {
+            const [resProd, resSet] = await Promise.all([
+                fetch('/api/products').then(r => r.ok ? r.json() : null),
+                fetch('/api/settings').then(r => r.ok ? r.json() : null)
+            ]);
+
+            if (resSet) {
+                currentSettings = { ...currentSettings, ...resSet };
+                if (!currentSettings.categories || currentSettings.categories.length === 0) {
+                    currentSettings.categories = [
+                        { id: 'new', name: 'MEN’S COLLECTION', badge: 'MEN' },
+                        { id: 'sig', name: 'WOMEN’S COLLECTION', badge: 'WOMEN' }
+                    ];
+                }
+                populateSettingsForm();
+                populateCategories();
+            }
+
+            if (resProd && Array.isArray(resProd)) {
+                allProducts = resProd;
+            }
+
+            renderProducts();
+            updateStats();
+        } catch (e) {
+            console.error('Error loading data:', e);
+        }
+    }
+
+    function updateStats() {
+        document.getElementById('statTotal').textContent = allProducts.length;
+        document.getElementById('prodCountBadge').textContent = allProducts.length;
+        document.getElementById('catCountBadge').textContent = (currentSettings.categories || []).length;
+        document.getElementById('statTopPos').textContent = allProducts.filter(p => p.topPosition).length;
+        document.getElementById('statScrollStage').textContent = allProducts.filter(p => p.inScroll !== false).length;
+        document.getElementById('statWhatsApp').textContent = '+' + (currentSettings.whatsapp || '923077536327');
+        
+        if (currentSettings.brandName) {
+            document.getElementById('headerBrand').childNodes[0].textContent = currentSettings.brandName;
+        }
+    }
+
+    // ================= CATEGORIES MANAGEMENT =================
+    function populateCategories() {
+        const cats = currentSettings.categories || [];
+        // Update Filter Select
+        const catFilter = document.getElementById('catFilter');
+        const currentFilterVal = catFilter.value;
+        catFilter.innerHTML = '<option value="all">All Categories</option>' + 
+            cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        catFilter.value = currentFilterVal;
+
+        // Update Modal Category Dropdown
+        const pCat = document.getElementById('pCat');
+        pCat.innerHTML = cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+        // Update Categories View Table
+        const catTbody = document.getElementById('categoriesTableBody');
+        if (catTbody) {
+            catTbody.innerHTML = cats.map(c => {
+                const count = allProducts.filter(p => p.cat === c.id).length;
+                return `
+                    <tr>
+                        <td><b style="font-size:14px; color:var(--ink);">${c.name}</b></td>
+                        <td><code>${c.id}</code></td>
+                        <td>${c.badge ? `<span class="badge-tag b-new">${c.badge}</span>` : '—'}</td>
+                        <td><b>${count}</b> products</td>
+                        <td style="text-align:right;">
+                            <button class="btn-action del" onclick="deleteCategory('${c.id}')" ${cats.length <= 1 ? 'disabled title="At least one category is required"' : ''}>Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    }
+
+    document.getElementById('categoryForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('catNameInput').value.trim();
+        let slug = document.getElementById('catSlugInput').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+        const badge = document.getElementById('catBadgeInput').value.trim();
+
+        if (!name || !slug) return;
+
+        const cats = currentSettings.categories || [];
+        if (cats.some(c => c.id === slug)) {
+            alert('A category with this code/slug already exists.');
+            return;
+        }
+
+        cats.push({ id: slug, name, badge });
+        currentSettings.categories = cats;
+
+        await saveCurrentSettings();
+        document.getElementById('categoryForm').reset();
+        populateCategories();
+        showToast(`Category "${name}" created!`);
+    });
+
+    window.deleteCategory = async function(id) {
+        const cats = currentSettings.categories || [];
+        if (cats.length <= 1) {
+            alert('You must have at least one category.');
+            return;
+        }
+        if (!confirm(`Delete category "${id}"? Products in this category will not be deleted but can be reassigned.`)) {
+            return;
+        }
+        currentSettings.categories = cats.filter(c => c.id !== id);
+        await saveCurrentSettings();
+        populateCategories();
+        showToast('Category deleted');
+    };
+
+    document.getElementById('btnQuickAddCat').addEventListener('click', () => {
+        const name = prompt('Enter new Category Name (e.g. Winter Wear):');
+        if (!name || !name.trim()) return;
+        const slug = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '-');
+        const cats = currentSettings.categories || [];
+        if (!cats.some(c => c.id === slug)) {
+            cats.push({ id: slug, name: name.trim() });
+            currentSettings.categories = cats;
+            saveCurrentSettings().then(() => {
+                populateCategories();
+                document.getElementById('pCat').value = slug;
+                showToast(`Category "${name}" created!`);
+            });
+        }
+    });
+
+    // ================= PRODUCTS TABLE & QUICK TOGGLES =================
+    function renderProducts() {
+        const tbody = document.getElementById('productsTableBody');
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        const cat = document.getElementById('catFilter').value;
+
+        let filtered = allProducts.filter(p => {
+            const matchQ = (p.n && p.n.toLowerCase().includes(q)) || 
+                           (p.fabric && p.fabric.toLowerCase().includes(q)) || 
+                           (p.d && p.d.toLowerCase().includes(q));
+            const matchCat = (cat === 'all') || (p.cat === cat);
+            return matchQ && matchCat;
+        });
+
+        // Sort: topPosition items first, then sortOrder
+        filtered.sort((a, b) => {
+            if (a.topPosition && !b.topPosition) return -1;
+            if (!a.topPosition && b.topPosition) return 1;
+            return (a.sortOrder || 999) - (b.sortOrder || 999);
+        });
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--mut);">No products found matching your filter.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = filtered.map(p => {
+            const catObj = (currentSettings.categories || []).find(c => c.id === p.cat);
+            const catName = catObj ? catObj.name : (p.catName || p.cat);
+            const imgsCount = Array.isArray(p.imgs) ? p.imgs.length : 1;
+            const isScroll = p.inScroll !== false;
+            const isTop = !!p.topPosition;
+            const hasVideo = !!p.video;
+
+            return `
+                <tr>
+                    <td>
+                        <div class="prod-cell">
+                            <div class="prod-thumb-wrap" onclick="editProduct('${p.id}')">
+                                <img src="${p.img}" class="prod-thumb" alt="${p.n}">
+                                ${imgsCount > 1 ? `<span class="thumb-badge-count">📷 ${imgsCount}</span>` : ''}
+                                ${hasVideo ? `<span class="thumb-video-badge">▶ VID</span>` : ''}
+                            </div>
+                            <div>
+                                <div class="prod-title">${p.n}</div>
+                                <div class="prod-sub">${p.fabric || 'Fabric'} · ${p.pieces || 'Pieces'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span style="background:#f4efe6; color:#785c18; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:600; display:inline-block;">● ${catName}</span>
+                    </td>
+                    <td>
+                        <span class="price-text">${p.pr}</span>
+                    </td>
+                    <td>
+                        <button class="btn-badge-toggle ${isTop ? 'active-top' : ''}" onclick="toggleTopPosition('${p.id}', event)" title="Click to toggle Top Position">
+                            ${isTop ? '⭐ TOP PINNED' : '☆ Pin Top'}
+                        </button>
+                        <button class="btn-badge-toggle ${isScroll ? 'active-scroll' : ''}" onclick="toggleScrollStage('${p.id}', event)" title="Click to toggle Scroll Showcase">
+                            ${isScroll ? '🎡 IN SCROLL' : '○ Scroll Off'}
+                        </button>
+                    </td>
+                    <td>
+                        ${p.b ? `<span class="badge-tag ${p.c || 'b-new'}">${p.b}</span> ` : ''}
+                        <span style="font-size:11px; color:#555;">${p.stock || 'In Stock'}</span>
+                    </td>
+                    <td style="text-align: right;">
+                        <div class="action-btns" style="justify-content: flex-end;">
+                            <button class="btn-action" onclick="editProduct('${p.id}')">Edit</button>
+                            <button class="btn-action del" onclick="deleteProduct('${p.id}', '${p.n}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    window.toggleTopPosition = async function(id, e) {
+        if (e) e.stopPropagation();
+        const p = allProducts.find(x => x.id === id);
+        if (!p) return;
+        const newTop = !p.topPosition;
+        p.topPosition = newTop;
+        renderProducts();
+        updateStats();
+
+        try {
+            await fetch(`/api/products/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topPosition: newTop })
+            });
+            showToast(newTop ? `"${p.n}" pinned to Top Position!` : `"${p.n}" unpinned from Top Position.`);
+        } catch (_) {}
+    };
+
+    window.toggleScrollStage = async function(id, e) {
+        if (e) e.stopPropagation();
+        const p = allProducts.find(x => x.id === id);
+        if (!p) return;
+        const newScroll = !(p.inScroll !== false);
+        p.inScroll = newScroll;
+        renderProducts();
+        updateStats();
+
+        try {
+            await fetch(`/api/products/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ inScroll: newScroll })
+            });
+            showToast(newScroll ? `"${p.n}" added to Scroll Showcase!` : `"${p.n}" hidden from Scroll Showcase.`);
+        } catch (_) {}
+    };
+
+    // ================= TABS NAVIGATION =================
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const view = btn.dataset.view;
+            document.getElementById('viewProducts').style.display = view === 'products' ? 'block' : 'none';
+            document.getElementById('viewCategories').style.display = view === 'categories' ? 'block' : 'none';
+            document.getElementById('viewSettings').style.display = view === 'settings' ? 'block' : 'none';
+            document.getElementById('viewSecurity').style.display = view === 'security' ? 'block' : 'none';
+            document.getElementById('viewDatabase').style.display = view === 'database' ? 'block' : 'none';
+            if (view === 'database') loadDbStatus();
+        });
+    });
+
+    document.getElementById('searchInput').addEventListener('input', renderProducts);
+    document.getElementById('catFilter').addEventListener('change', renderProducts);
+
+    // ================= PRODUCT MODAL =================
+    const productModal = document.getElementById('productModal');
+    const openAddModalBtn = document.getElementById('openAddModalBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const saveProductBtn = document.getElementById('saveProductBtn');
+    const frontPreview = document.getElementById('frontPreview');
+    const backPreview = document.getElementById('backPreview');
+    const pImgUrl = document.getElementById('pImgUrl');
+    const pBackUrl = document.getElementById('pBackUrl');
+    const pVideoUrl = document.getElementById('pVideoUrl');
+    const videoPreviewWrap = document.getElementById('videoPreviewWrap');
+    const videoPlayerContainer = document.getElementById('videoPlayerContainer');
+    const btnRemoveVideo = document.getElementById('btnRemoveVideo');
+
+    function openModal(isEdit = false) {
+        document.getElementById('modalTitle').textContent = isEdit ? 'Edit Product' : 'Add New Product';
+        productModal.classList.add('open');
+    }
+
+    function closeModal() {
+        productModal.classList.remove('open');
+        document.getElementById('productForm').reset();
+        document.getElementById('editProdId').value = '';
+        frontPreview.src = 'assets/images/sage1.jpg';
+        backPreview.src = 'assets/images/sage2.jpg';
+        currentGallery = [];
+        renderGalleryItems();
+        hideVideoPreview();
+        document.getElementById('frontUploadStatus').textContent = '';
+        document.getElementById('backUploadStatus').textContent = '';
+        document.getElementById('multiUploadStatus').textContent = '';
+        document.getElementById('videoUploadStatus').textContent = '';
+    }
+
+    openAddModalBtn.addEventListener('click', () => {
+        closeModal();
+        populateCategories();
+        openModal(false);
+    });
+    closeModalBtn.addEventListener('click', closeModal);
+    cancelModalBtn.addEventListener('click', closeModal);
+
+    pImgUrl.addEventListener('input', () => { frontPreview.src = pImgUrl.value || 'assets/images/sage1.jpg'; });
+    pBackUrl.addEventListener('input', () => { backPreview.src = pBackUrl.value || 'assets/images/sage2.jpg'; });
+    pVideoUrl.addEventListener('input', () => { updateVideoPreview(pVideoUrl.value.trim()); });
+    btnRemoveVideo.addEventListener('click', () => {
+        pVideoUrl.value = '';
+        hideVideoPreview();
+    });
+
+    function updateVideoPreview(url) {
+        if (!url) {
+            hideVideoPreview();
+            return;
+        }
+        videoPreviewWrap.style.display = 'block';
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            const vidId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
+            videoPlayerContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${vidId}" style="width:100%;height:180px;border:0;" allowfullscreen></iframe>`;
+        } else {
+            videoPlayerContainer.innerHTML = `<video src="${url}" controls playsinline style="width:100%;height:180px;object-fit:cover;"></video>`;
+        }
+    }
+
+    function hideVideoPreview() {
+        videoPreviewWrap.style.display = 'none';
+        videoPlayerContainer.innerHTML = '';
+    }
+
+    // Single File Upload
+    function setupFileUpload(inputEl, urlInputEl, previewEl, statusEl) {
+        inputEl.addEventListener('change', async () => {
+            const file = inputEl.files[0];
+            if (!file) return;
+            statusEl.textContent = 'Uploading...';
+            const reader = new FileReader();
+            reader.onload = async () => {
+                const base64 = reader.result;
+                try {
+                    const res = await fetch('/api/upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image: base64 })
+                    });
+                    const data = await res.json();
+                    if (data.url) {
+                        urlInputEl.value = data.url;
+                        if (previewEl) previewEl.src = data.url;
+                        statusEl.textContent = '✓ Ready';
+                        statusEl.style.color = 'var(--success)';
+                    }
+                } catch (e) {
+                    urlInputEl.value = base64;
+                    if (previewEl) previewEl.src = base64;
+                    statusEl.textContent = '✓ Ready';
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    setupFileUpload(document.getElementById('frontFileInput'), pImgUrl, frontPreview, document.getElementById('frontUploadStatus'));
+    setupFileUpload(document.getElementById('backFileInput'), pBackUrl, backPreview, document.getElementById('backUploadStatus'));
+
+    // Video Upload
+    document.getElementById('videoFileInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const statusEl = document.getElementById('videoUploadStatus');
+        statusEl.textContent = 'Uploading video...';
+        const reader = new FileReader();
+        reader.onload = async () => {
+            const base64 = reader.result;
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ video: base64 })
+                });
+                const data = await res.json();
+                if (data.url) {
+                    pVideoUrl.value = data.url;
+                    updateVideoPreview(data.url);
+                    statusEl.textContent = '✓ Video Ready';
+                    statusEl.style.color = 'var(--success)';
+                }
+            } catch (err) {
+                pVideoUrl.value = base64;
+                updateVideoPreview(base64);
+                statusEl.textContent = '✓ Video Ready';
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Multi-File Gallery Upload
+    document.getElementById('multiFileInput').addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        const statusEl = document.getElementById('multiUploadStatus');
+        statusEl.textContent = `Uploading ${files.length} images...`;
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const base64 = await new Promise(resolve => {
+                const r = new FileReader();
+                r.onload = () => resolve(r.result);
+                r.readAsDataURL(file);
+            });
+
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: base64 })
+                });
+                const data = await res.json();
+                currentGallery.push({ k: data.url || base64, l: file.name.replace(/\.[^.]+$/, '') });
+            } catch (_) {
+                currentGallery.push({ k: base64, l: 'Photo ' + (currentGallery.length + 1) });
+            }
+        }
+
+        renderGalleryItems();
+        statusEl.textContent = `✓ ${files.length} photos added!`;
+        statusEl.style.color = 'var(--success)';
+    });
+
+    document.getElementById('btnAddPhotoUrlBtn').addEventListener('click', () => {
+        const url = prompt('Enter image URL:');
+        if (url && url.trim()) {
+            currentGallery.push({ k: url.trim(), l: 'Photo ' + (currentGallery.length + 1) });
+            renderGalleryItems();
+        }
+    });
+
+    function renderGalleryItems() {
+        const c = document.getElementById('galleryContainer');
+        c.innerHTML = currentGallery.map((item, idx) => `
+            <div class="gallery-item">
+                <button type="button" class="btn-remove-gal" onclick="removeGalleryItem(${idx})">&times;</button>
+                <img src="${item.k}" alt="Gallery ${idx}">
+                <input type="text" value="${item.l || ''}" placeholder="Label (e.g. Back)" oninput="updateGalleryLabel(${idx}, this.value)">
+            </div>
+        `).join('');
+    }
+
+    window.removeGalleryItem = function(idx) {
+        currentGallery.splice(idx, 1);
+        renderGalleryItems();
+    };
+
+    window.updateGalleryLabel = function(idx, val) {
+        if (currentGallery[idx]) currentGallery[idx].l = val;
+    };
+
+    // Edit Product
+    window.editProduct = function(id) {
+        const p = allProducts.find(item => item.id === id);
+        if (!p) return;
+        populateCategories();
+        document.getElementById('editProdId').value = p.id;
+        document.getElementById('pName').value = p.n || '';
+        document.getElementById('pPrice').value = p.pr || '';
+        document.getElementById('pSizes').value = p.sizes || 'S, M, L, XL, XXL';
+        document.getElementById('pCat').value = p.cat || 'new';
+        document.getElementById('pInScroll').checked = p.inScroll !== false;
+        document.getElementById('pTopPosition').checked = !!p.topPosition;
+        document.getElementById('pSortOrder').value = p.sortOrder || 1;
+        document.getElementById('pBadge').value = p.b || '';
+        document.getElementById('pBadgeClass').value = p.c || 'b-new';
+        document.getElementById('pFabric').value = p.fabric || '';
+        document.getElementById('pPieces').value = p.pieces || '';
+        document.getElementById('pStock').value = p.stock || 'In Stock';
+        pImgUrl.value = p.img || '';
+        pBackUrl.value = p.back || '';
+        frontPreview.src = p.img || 'assets/images/sage1.jpg';
+        backPreview.src = p.back || 'assets/images/sage2.jpg';
+        pVideoUrl.value = p.video || '';
+        updateVideoPreview(p.video || '');
+
+        // Load Gallery
+        if (Array.isArray(p.imgs) && p.imgs.length > 0) {
+            currentGallery = p.imgs.map(x => (typeof x === 'string' ? { k: x, l: 'Photo' } : { k: x.k || x.url, l: x.l || 'Photo' }));
+        } else {
+            currentGallery = [];
+        }
+        renderGalleryItems();
+
+        document.getElementById('pDesc').value = p.d || '';
+        openModal(true);
+    };
+
+    // Save Product (Create or Update)
+    saveProductBtn.addEventListener('click', async () => {
+        const id = document.getElementById('editProdId').value;
+        const n = document.getElementById('pName').value.trim();
+        let pr = document.getElementById('pPrice').value.trim();
+        if (pr && !pr.startsWith('$')) pr = `$${pr}`;
+        const sizes = document.getElementById('pSizes').value.trim() || 'S, M, L, XL, XXL';
+        const cat = document.getElementById('pCat').value;
+        const inScroll = document.getElementById('pInScroll').checked;
+        const topPosition = document.getElementById('pTopPosition').checked;
+        const sortOrder = parseInt(document.getElementById('pSortOrder').value, 10) || 1;
+        const b = document.getElementById('pBadge').value.trim();
+        const c = document.getElementById('pBadgeClass').value;
+        const fabric = document.getElementById('pFabric').value.trim();
+        const pieces = document.getElementById('pPieces').value.trim();
+        const stock = document.getElementById('pStock').value;
+        const img = pImgUrl.value.trim() || 'assets/images/sage1.jpg';
+        const back = pBackUrl.value.trim() || img;
+        const video = pVideoUrl.value.trim();
+        const d = document.getElementById('pDesc').value.trim();
+
+        if (!n || !pr) {
+            alert('Please fill in product name and price.');
+            return;
+        }
+
+        // Build full gallery imgs array
+        let imgs = [...currentGallery];
+        if (imgs.length === 0) {
+            imgs.push({ k: img, l: 'Front' });
+            if (back && back !== img) imgs.push({ k: back, l: 'Look 2' });
+        }
+
+        const catObj = (currentSettings.categories || []).find(x => x.id === cat);
+        const catName = catObj ? catObj.name : 'COLLECTION';
+
+        const payload = {
+            n, pr, sizes, cat, catName, inScroll, topPosition, sortOrder, b, c, fabric, pieces, stock, img, back, imgs, video, d
+        };
+
+        let saved = false;
+        try {
+            const url = id ? `/api/products/${id}` : '/api/products';
+            const method = id ? 'PUT' : 'POST';
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) saved = true;
+        } catch (_) {}
+
+        if (saved) {
+            showToast(id ? 'Product updated successfully!' : 'New product added to catalog!');
+            closeModal();
+            loadData();
+        } else {
+            alert('Failed to save product. Please check your connection or server status.');
+        }
+    });
+
+    // Delete Product
+    window.deleteProduct = async function(id, name) {
+        if (!confirm(`Are you sure you want to remove "${name}" from the catalog?`)) {
+            return;
+        }
+        try {
+            const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                showToast(`"${name}" removed from catalog`);
+                loadData();
+            }
+        } catch (_) {
+            alert('Error deleting product.');
+        }
+    };
+
+    // ================= SETTINGS FORM =================
+    function populateSettingsForm() {
+        document.getElementById('setWhatsApp').value = currentSettings.whatsapp || '923077536327';
+        document.getElementById('setBrandName').value = currentSettings.brandName || 'AB INDUSTRY';
+        document.getElementById('setTagline').value = currentSettings.tagline || 'WEAR YOUR STYLE';
+        document.getElementById('setInstagram').value = currentSettings.instagram || '@abindustry';
+        document.getElementById('setCurrency').value = currentSettings.currency || 'Rs';
+        document.getElementById('setAnnouncement').value = currentSettings.announcement || '';
+    }
+
+    async function saveCurrentSettings() {
+        try {
+            await fetch('/api/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(currentSettings)
+            });
+            updateStats();
+        } catch (_) {}
+    }
+
+    document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        currentSettings.whatsapp = document.getElementById('setWhatsApp').value.trim().replace(/\D/g, '');
+        currentSettings.brandName = document.getElementById('setBrandName').value.trim();
+        currentSettings.tagline = document.getElementById('setTagline').value.trim();
+        currentSettings.instagram = document.getElementById('setInstagram').value.trim();
+        currentSettings.currency = document.getElementById('setCurrency').value.trim();
+        currentSettings.announcement = document.getElementById('setAnnouncement').value.trim();
+
+        await saveCurrentSettings();
+        showToast('Settings saved successfully!');
+    });
+
+    document.getElementById('btnTestWhatsApp').addEventListener('click', () => {
+        const num = document.getElementById('setWhatsApp').value.trim().replace(/\D/g, '');
+        if (!num) return alert('Enter WhatsApp number first.');
+        window.open(`https://wa.me/${num}?text=` + encodeURIComponent('Assalam o Alaikum, testing WhatsApp order link for AB Industry!'), '_blank');
+    });
+
+    // ================= PASSWORD CHANGE FORM =================
+    document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const cur = document.getElementById('curPassword').value.trim();
+        const newP = document.getElementById('newPassword').value.trim();
+        const conf = document.getElementById('confirmPassword').value.trim();
+
+        await prefetchSettings();
+        const expectedPin = currentSettings.adminPin || '1423';
+
+        if (cur !== expectedPin) {
+            alert('Current password is incorrect! (Default is 1423)');
+            document.getElementById('curPassword').focus();
+            return;
+        }
+
+        if (newP.length < 3) {
+            alert('New password must be at least 3 characters.');
+            return;
+        }
+
+        if (newP !== conf) {
+            alert('New password and confirm password do not match!');
+            return;
+        }
+
+        currentSettings.adminPin = newP;
+        await saveCurrentSettings();
+
+        document.getElementById('passwordForm').reset();
+        showToast(`Password successfully changed to "${newP}"!`);
+        alert(`Success! Your new admin password is: ${newP}\nKeep it safe.`);
+    });
+
+    document.getElementById('toggleShowPassBtn').addEventListener('click', () => {
+        const inputs = [document.getElementById('curPassword'), document.getElementById('newPassword'), document.getElementById('confirmPassword')];
+        const isPass = inputs[0].type === 'password';
+        inputs.forEach(i => i.type = isPass ? 'text' : 'password');
+    });
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(window.toastTimer);
+        window.toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    // ================= DATABASE / SUPABASE CONFIG =================
+    async function loadDbStatus() {
+        try {
+            const res = await fetch('/api/db/status');
+            const data = await res.json();
+            const pill = document.getElementById('dbStatusPill');
+            const urlIn = document.getElementById('dbUrlInput');
+            if (data.isSupabaseActive) {
+                pill.textContent = '● CONNECTED TO SUPABASE';
+                pill.style.background = '#dcfce7';
+                pill.style.color = '#15803d';
+                if (data.supabaseUrl) urlIn.value = data.supabaseUrl;
+            } else {
+                pill.textContent = '● LOCAL DATABASE (OFFLINE)';
+                pill.style.background = '#fef3c7';
+                pill.style.color = '#b45309';
+            }
+        } catch (_) {}
+    }
+
+    document.getElementById('dbConfigForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const url = document.getElementById('dbUrlInput').value.trim();
+        const key = document.getElementById('dbKeyInput').value.trim();
+        try {
+            const res = await fetch('/api/supabase/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url, key })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast(data.message || 'Supabase connected!');
+                loadDbStatus();
+            } else {
+                alert('Connection error: ' + (data.error || 'Failed to connect'));
+            }
+        } catch (err) {
+            alert('Failed to connect: ' + err.message);
+        }
+    });
+
+    document.getElementById('btnSyncDb').addEventListener('click', async () => {
+        if (!confirm('This will upload all 6 current products and settings into your Supabase database. Continue?')) return;
+        const btn = document.getElementById('btnSyncDb');
+        btn.textContent = '⏳ SYNCING...';
+        btn.disabled = true;
+        try {
+            const res = await fetch('/api/db/sync', { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                showToast(data.message);
+                loadData();
+            } else {
+                alert(data.message + (data.errors ? '\n\n' + data.errors.join('\n') : ''));
+            }
+        } catch (e) {
+            alert('Sync failed: ' + e.message);
+        } finally {
+            btn.textContent = '☁️ SYNC PRODUCTS TO SUPABASE';
+            btn.disabled = false;
+        }
+    });
+
+    document.getElementById('btnCopySql').addEventListener('click', async () => {
+        try {
+            const res = await fetch('/supabase_schema.sql');
+            const sql = await res.text();
+            await navigator.clipboard.writeText(sql);
+            showToast('SQL Schema copied to clipboard!');
+        } catch (_) {
+            showToast('Please open supabase_schema.sql in project folder to copy.');
+        }
+    });
+
+    // Initialize
+    checkAuth();
+</script>
+</body>
+</html>

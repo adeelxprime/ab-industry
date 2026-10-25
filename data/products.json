@@ -1,0 +1,463 @@
+[
+  {
+    "id": "prod-ab-1",
+    "n": "Men’s Set: Hoodie + Baggy Jeans",
+    "img": "a1",
+    "back": "a2",
+    "imgs": [
+      {
+        "k": "a1",
+        "l": "Set front"
+      },
+      {
+        "k": "a2",
+        "l": "Set back"
+      },
+      {
+        "k": "a3",
+        "l": "Hoodie front"
+      },
+      {
+        "k": "a4",
+        "l": "Hoodie back"
+      },
+      {
+        "k": "a5",
+        "l": "Jeans front"
+      },
+      {
+        "k": "a6",
+        "l": "Jeans back"
+      },
+      {
+        "k": "a7",
+        "l": "Logo detail"
+      },
+      {
+        "k": "a8",
+        "l": "Fabric"
+      }
+    ],
+    "video": "",
+    "b": "NEW",
+    "c": "b-new",
+    "cat": "new",
+    "catName": "MEN’S COLLECTION",
+    "pr": "$65.00",
+    "priceNum": 65,
+    "sizes": "S, M, L, XL, XXL",
+    "fabric": "Premium Cotton Fleece & Denim",
+    "pieces": "2 Piece Set",
+    "stock": "In Stock",
+    "inScroll": true,
+    "topPosition": true,
+    "sortOrder": 1,
+    "d": "White hoodie with embroidered AB logo and black baggy jeans, sold as one set. Premium fabric, breathable, durable stitching."
+  },
+  {
+    "id": "prod-ab-2",
+    "n": "Baggy Jeans & Hoodie Set",
+    "img": "b1",
+    "back": "b2",
+    "imgs": [
+      {
+        "k": "b1",
+        "l": "Front"
+      },
+      {
+        "k": "b2",
+        "l": "Back"
+      },
+      {
+        "k": "b3",
+        "l": "Hoodie detail"
+      },
+      {
+        "k": "b4",
+        "l": "Logo detail"
+      },
+      {
+        "k": "b5",
+        "l": "Jeans detail"
+      },
+      {
+        "k": "b6",
+        "l": "Pocket"
+      }
+    ],
+    "video": "",
+    "b": "SET",
+    "c": "b-sale",
+    "cat": "new",
+    "catName": "MEN’S COLLECTION",
+    "pr": "$58.00",
+    "priceNum": 58,
+    "sizes": "S, M, L, XL",
+    "fabric": "Denim & Fleece",
+    "pieces": "2 Piece Set",
+    "stock": "In Stock",
+    "inScroll": true,
+    "topPosition": false,
+    "sortOrder": 2,
+    "d": "Classic blue baggy jeans with the white AB hoodie. A casual look made for everyday comfort."
+  },
+  {
+    "id": "prod-ab-3",
+    "n": "Hoodie & Tourizer",
+    "img": "y1",
+    "back": "y2",
+    "imgs": [
+      {
+        "k": "y1",
+        "l": "Front"
+      },
+      {
+        "k": "y2",
+        "l": "Back"
+      },
+      {
+        "k": "y3",
+        "l": "Hoodie detail"
+      },
+      {
+        "k": "y4",
+        "l": "Trouser detail"
+      },
+      {
+        "k": "y5",
+        "l": "Fabric"
+      }
+    ],
+    "colors": [
+      {
+        "n": "Yellow",
+        "hex": "#f2c200",
+        "imgs": [
+          {
+            "k": "y1",
+            "l": "Front"
+          },
+          {
+            "k": "y2",
+            "l": "Back"
+          },
+          {
+            "k": "y3",
+            "l": "Hoodie detail"
+          },
+          {
+            "k": "y4",
+            "l": "Trouser detail"
+          },
+          {
+            "k": "y5",
+            "l": "Fabric"
+          }
+        ]
+      },
+      {
+        "n": "White",
+        "hex": "#f4f4f4",
+        "imgs": [
+          {
+            "k": "w1",
+            "l": "Front"
+          },
+          {
+            "k": "w2",
+            "l": "Back"
+          }
+        ]
+      }
+    ],
+    "video": "",
+    "b": "2 COLOURS",
+    "c": "b-low",
+    "cat": "new",
+    "catName": "MEN’S COLLECTION",
+    "pr": "$49.00",
+    "priceNum": 49,
+    "sizes": "S, M, L, XL, XXL",
+    "fabric": "Soft Fleece",
+    "pieces": "2 Piece Set",
+    "stock": "In Stock",
+    "inScroll": true,
+    "topPosition": false,
+    "sortOrder": 3,
+    "d": "Baggy-style hoodie and jogger tourizer in soft, breathable fabric. Available in yellow and white."
+  },
+  {
+    "id": "prod-ab-4",
+    "n": "Men’s Hoodie & Trouser",
+    "img": "m1",
+    "back": "m2",
+    "imgs": [
+      {
+        "k": "m1",
+        "l": "Front"
+      },
+      {
+        "k": "m2",
+        "l": "Back"
+      },
+      {
+        "k": "m3",
+        "l": "Adjustable hood"
+      },
+      {
+        "k": "m4",
+        "l": "Logo print"
+      },
+      {
+        "k": "m5",
+        "l": "Waistband"
+      },
+      {
+        "k": "m6",
+        "l": "Side pockets"
+      }
+    ],
+    "colors": [
+      {
+        "n": "Black / Grey",
+        "hex": "linear-gradient(135deg,#1b1b1b 50%,#8b9097 50%)",
+        "imgs": [
+          {
+            "k": "m1",
+            "l": "Front"
+          },
+          {
+            "k": "m2",
+            "l": "Back"
+          },
+          {
+            "k": "m3",
+            "l": "Adjustable hood"
+          },
+          {
+            "k": "m4",
+            "l": "Logo print"
+          },
+          {
+            "k": "m5",
+            "l": "Waistband"
+          },
+          {
+            "k": "m6",
+            "l": "Side pockets"
+          }
+        ]
+      },
+      {
+        "n": "Navy / White",
+        "hex": "linear-gradient(135deg,#1b2a5c 50%,#f2f2f2 50%)",
+        "imgs": [
+          {
+            "k": "c2",
+            "l": "Navy / White"
+          }
+        ]
+      },
+      {
+        "n": "Green / Beige",
+        "hex": "linear-gradient(135deg,#12392c 50%,#d9cdb3 50%)",
+        "imgs": [
+          {
+            "k": "c3",
+            "l": "Green / Beige"
+          }
+        ]
+      },
+      {
+        "n": "Red / Black",
+        "hex": "linear-gradient(135deg,#b3202a 50%,#1b1b1b 50%)",
+        "imgs": [
+          {
+            "k": "c4",
+            "l": "Red / Black"
+          }
+        ]
+      },
+      {
+        "n": "Blue / Grey",
+        "hex": "linear-gradient(135deg,#2f5bd0 50%,#9aa4b2 50%)",
+        "imgs": [
+          {
+            "k": "c5",
+            "l": "Blue / Grey"
+          }
+        ]
+      },
+      {
+        "n": "White / Black",
+        "hex": "linear-gradient(135deg,#f4f4f4 50%,#1b1b1b 50%)",
+        "imgs": [
+          {
+            "k": "c6",
+            "l": "White / Black"
+          }
+        ]
+      }
+    ],
+    "video": "",
+    "b": "6 COLOURS",
+    "c": "b-low",
+    "cat": "new",
+    "catName": "MEN’S COLLECTION",
+    "pr": "$55.00",
+    "priceNum": 55,
+    "sizes": "M, L, XL, XXL",
+    "fabric": "Colour-block Fleece",
+    "pieces": "2 Piece Set",
+    "stock": "In Stock",
+    "inScroll": true,
+    "topPosition": false,
+    "sortOrder": 4,
+    "d": "Baggy-style colour-block hoodie and trouser set with adjustable drawstring hood, high quality logo print, elastic waistband and side pockets. Available in 6 colours."
+  },
+  {
+    "id": "prod-ab-5",
+    "n": "Pink Zip Jacket & Cargo Set",
+    "img": "p1",
+    "back": "p2",
+    "imgs": [
+      {
+        "k": "p1",
+        "l": "Front"
+      },
+      {
+        "k": "p2",
+        "l": "Back"
+      },
+      {
+        "k": "p3",
+        "l": "Hoodie detail"
+      },
+      {
+        "k": "p4",
+        "l": "Zipper"
+      },
+      {
+        "k": "p5",
+        "l": "Sleeve"
+      },
+      {
+        "k": "p6",
+        "l": "Pocket"
+      }
+    ],
+    "video": "",
+    "b": "NEW",
+    "c": "b-new",
+    "cat": "sig",
+    "catName": "WOMEN’S COLLECTION",
+    "pr": "$62.00",
+    "priceNum": 62,
+    "sizes": "S, M, L, XL",
+    "fabric": "Cotton Fleece & Cargo Twill",
+    "pieces": "2 Piece Set",
+    "stock": "In Stock",
+    "inScroll": true,
+    "topPosition": false,
+    "sortOrder": 5,
+    "d": "Pink and white zip hooded jacket with wide-leg cargo pants. Set includes jacket and pant."
+  },
+  {
+    "id": "prod-ab-6",
+    "n": "Women’s Baby Pink Hoodie",
+    "img": "h1",
+    "back": "h2",
+    "imgs": [
+      {
+        "k": "h1",
+        "l": "Front"
+      },
+      {
+        "k": "h2",
+        "l": "Back"
+      },
+      {
+        "k": "h3",
+        "l": "Hood"
+      },
+      {
+        "k": "h4",
+        "l": "Logo detail"
+      },
+      {
+        "k": "h5",
+        "l": "Ribbed cuffs"
+      }
+    ],
+    "video": "",
+    "b": "WOMEN",
+    "c": "b-low",
+    "cat": "sig",
+    "catName": "WOMEN’S COLLECTION",
+    "pr": "$42.00",
+    "priceNum": 42,
+    "sizes": "S, M, L, XL, XXL",
+    "fabric": "Baby Pink Fleece",
+    "pieces": "1 Piece Hoodie",
+    "stock": "In Stock",
+    "inScroll": true,
+    "topPosition": false,
+    "sortOrder": 6,
+    "d": "Baggy-style hoodie in baby pink with drawstring hood and ribbed cuffs. Comfort meets style."
+  },
+  {
+    "id": "prod-ab-1",
+    "n": "Men’s Set: Hoodie + Baggy Jeans",
+    "pr": "$65.00",
+    "priceNum": 65,
+    "sizes": "S, M, L, XL, XXL",
+    "cat": "new",
+    "catName": "MEN’S COLLECTION",
+    "b": "NEW",
+    "c": "b-new",
+    "img": "a1",
+    "back": "a2",
+    "imgs": [
+      {
+        "k": "a1",
+        "l": "Set front"
+      },
+      {
+        "k": "a2",
+        "l": "Set back"
+      },
+      {
+        "k": "a3",
+        "l": "Hoodie front"
+      },
+      {
+        "k": "a4",
+        "l": "Hoodie back"
+      },
+      {
+        "k": "a5",
+        "l": "Jeans front"
+      },
+      {
+        "k": "a6",
+        "l": "Jeans back"
+      },
+      {
+        "k": "a7",
+        "l": "Logo detail"
+      },
+      {
+        "k": "a8",
+        "l": "Fabric"
+      }
+    ],
+    "video": "",
+    "inScroll": true,
+    "topPosition": true,
+    "sortOrder": 1,
+    "fabric": "Premium Cotton Fleece & Denim",
+    "pieces": "2 Piece Set",
+    "stock": "In Stock",
+    "d": "White hoodie with embroidered AB logo and black baggy jeans, sold as one set. Premium fabric, breathable, durable stitching."
+  }
+]
