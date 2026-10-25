@@ -45,7 +45,10 @@ function sendJSON(res, statusCode, data) {
         'Content-Type': 'application/json; charset=utf-8',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
+        'Access-Control-Allow-Headers': '*',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0'
     });
     res.end(JSON.stringify(data));
 }
@@ -81,7 +84,7 @@ const handler = async (req, res) => {
         res.writeHead(204, {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type'
+            'Access-Control-Allow-Headers': '*'
         });
         return res.end();
     }
@@ -175,23 +178,54 @@ const handler = async (req, res) => {
     // POST /api/upload-video (Direct binary stream upload for video files without base64 memory bloat)
     if (pathname === '/api/upload-video' && req.method === 'POST') {
         try {
-            const rawExt = req.headers['x-file-ext'] || '.mp4';
+            // Increase socket timeout for large video uploads (10 minutes)
+            if (req.socket) req.socket.setTimeout(600000);
+
+            const queryExt = urlObj.searchParams.get('ext');
+            const queryName = urlObj.searchParams.get('name');
+            const headerExt = req.headers['x-file-ext'];
+            const rawExt = queryExt || headerExt || path.extname(queryName || '') || '.mp4';
             const ext = rawExt.startsWith('.') ? rawExt.toLowerCase() : `.${rawExt.toLowerCase()}`;
             const filename = `video_${Date.now()}_${Math.random().toString(36).substring(2, 7)}${ext}`;
             const dest = path.join(UPLOADS_DIR, filename);
 
             const fileStream = fs.createWriteStream(dest);
+            let totalBytes = 0;
+            const MAX_VIDEO_BYTES = 120 * 1024 * 1024; // 120MB limit
+
+            req.on('data', chunk => {
+                totalBytes += chunk.length;
+                if (totalBytes > MAX_VIDEO_BYTES) {
+                    fileStream.destroy();
+                    fs.unlink(dest, () => {});
+                    req.destroy();
+                    return sendJSON(res, 413, { error: 'Video file exceeds 120MB limit.' });
+                }
+            });
+
             req.pipe(fileStream);
 
             fileStream.on('finish', () => {
+                if (totalBytes === 0) {
+                    fs.unlink(dest, () => {});
+                    return sendJSON(res, 400, { error: 'Uploaded video file was empty.' });
+                }
                 const publicUrl = `assets/images/${filename}`;
-                return sendJSON(res, 200, { success: true, url: publicUrl, filename });
+                return sendJSON(res, 200, { success: true, url: publicUrl, filename, size: totalBytes });
             });
 
             fileStream.on('error', (err) => {
-                console.error('[Video Upload Error]:', err.message);
-                return sendJSON(res, 500, { error: 'Failed to save video file' });
+                console.error('[Video Upload Stream Error]:', err.message);
+                return sendJSON(res, 500, { error: 'Failed to write video file to disk: ' + err.message });
             });
+
+            req.on('error', (err) => {
+                console.error('[Video Upload Request Error]:', err.message);
+                fileStream.destroy();
+                fs.unlink(dest, () => {});
+                return sendJSON(res, 500, { error: 'Upload interrupted: ' + err.message });
+            });
+
             return;
         } catch (err) {
             return sendJSON(res, 500, { error: err.message });
@@ -250,13 +284,23 @@ const handler = async (req, res) => {
         }
     }
 
-    // Storefront Homepage
+    // Storefront Homepage (With Real-Time Server-Side Data Injection)
     if (pathname === '/' || pathname === '/index.html' || pathname === '') {
         try {
-            const indexHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+            let indexHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+            const prods = await db.getProducts();
+            const set = await db.getSettings();
+            if (prods && prods.length > 0) {
+                indexHtml = indexHtml.replace(/let items\s*=\s*\[[\s\S]*?\n\];/i, `let items = ${JSON.stringify(prods)};`);
+            }
+            if (set) {
+                indexHtml = indexHtml.replace(/let currentStoreSettings\s*=\s*\{[\s\S]*?\n\};/i, `let currentStoreSettings = ${JSON.stringify(set)};`);
+            }
             res.writeHead(200, {
                 'Content-Type': 'text/html; charset=utf-8',
-                'Cache-Control': 'no-cache, no-store, must-revalidate'
+                'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+                'Pragma': 'no-cache',
+                'Expires': '0'
             });
             return res.end(indexHtml);
         } catch (e) {
@@ -273,25 +317,69 @@ const handler = async (req, res) => {
         .replace(/^[\\\/]+/, '');
 
     const filePath = path.join(__dirname, safePath);
-    const ext = path.extname(filePath).toLowerCase();
-    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 
-    fs.readFile(filePath, (err, content) => {
-        if (err) {
-            if (err.code === 'ENOENT') {
-                res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-                res.end('404 Not Found - Naqsh e Noor');
+    fs.stat(filePath, (err, stats) => {
+        if (err || !stats.isFile()) {
+            res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+            return res.end('404 Not Found - Naqsh e Noor');
+        }
+
+        const ext = path.extname(filePath).toLowerCase();
+        const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+        const isVideo = ext === '.mp4' || ext === '.webm' || ext === '.mov';
+
+        // HTTP 206 Partial Content for Video Streaming (Essential for iOS Safari & Android)
+        if (isVideo) {
+            const range = req.headers.range;
+            const fileSize = stats.size;
+
+            if (range) {
+                const parts = range.replace(/bytes=/, '').split('-');
+                const start = parseInt(parts[0], 10);
+                const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+                if (start >= fileSize || end >= fileSize) {
+                    res.writeHead(416, {
+                        'Content-Range': `bytes */${fileSize}`,
+                        'Access-Control-Allow-Origin': '*'
+                    });
+                    return res.end();
+                }
+
+                const chunkSize = (end - start) + 1;
+                const stream = fs.createReadStream(filePath, { start, end });
+                res.writeHead(206, {
+                    'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+                    'Accept-Ranges': 'bytes',
+                    'Content-Length': chunkSize,
+                    'Content-Type': contentType,
+                    'Access-Control-Allow-Origin': '*'
+                });
+                return stream.pipe(res);
             } else {
-                res.writeHead(500);
-                res.end(`Server Error: ${err.code}`);
+                res.writeHead(200, {
+                    'Content-Length': fileSize,
+                    'Content-Type': contentType,
+                    'Accept-Ranges': 'bytes',
+                    'Access-Control-Allow-Origin': '*'
+                });
+                return fs.createReadStream(filePath).pipe(res);
             }
-        } else {
+        }
+
+        // Standard static files (Images, CSS, JS, etc.)
+        fs.readFile(filePath, (readErr, content) => {
+            if (readErr) {
+                res.writeHead(500);
+                return res.end(`Server Error: ${readErr.code}`);
+            }
             res.writeHead(200, {
                 'Content-Type': contentType,
-                'Cache-Control': ext === '.jpg' || ext === '.png' || ext === '.webp' ? 'public, max-age=86400' : 'no-cache'
+                'Cache-Control': ext === '.jpg' || ext === '.png' || ext === '.webp' ? 'public, max-age=86400' : 'no-cache',
+                'Access-Control-Allow-Origin': '*'
             });
             res.end(content);
-        }
+        });
     });
 };
 

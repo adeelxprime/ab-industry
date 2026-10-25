@@ -984,8 +984,8 @@ requestAnimationFrame(frame);
 async function initStorefront(){
  try{
   const [resProd,resSet]=await Promise.all([
-   fetch('/api/products').then(r=>r.ok?r.json():null).catch(()=>null),
-   fetch('/api/settings').then(r=>r.ok?r.json():null).catch(()=>null)
+   fetch('/api/products?t=' + Date.now(), { cache: 'no-store' }).then(r=>r.ok?r.json():null).catch(()=>null),
+   fetch('/api/settings?t=' + Date.now(), { cache: 'no-store' }).then(r=>r.ok?r.json():null).catch(()=>null)
   ]);
   if(resSet){
    currentStoreSettings={...currentStoreSettings,...resSet};

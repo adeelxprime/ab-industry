@@ -1295,9 +1295,9 @@
                         </div>
                         <input type="text" id="pVideoUrl" placeholder="e.g. assets/videos/... or https://... or YouTube link">
                         <div class="upload-btn-wrap">
-                            <label class="btn-upload-file">
+                            <label class="btn-upload-file" style="position:relative; cursor:pointer;">
                                 📹 Upload Video File (MP4/WebM)
-                                <input type="file" id="videoFileInput" accept="video/mp4,video/webm,video/*" style="display:none;">
+                                <input type="file" id="videoFileInput" accept="video/*" style="position:absolute;left:-9999px;opacity:0;width:1px;height:1px;">
                             </label>
                             <span id="videoUploadStatus" style="font-size:12px; color:var(--mut); align-self:center;"></span>
                         </div>
@@ -1399,8 +1399,8 @@
     async function loadData() {
         try {
             const [resProd, resSet] = await Promise.all([
-                fetch('/api/products').then(r => r.ok ? r.json() : null),
-                fetch('/api/settings').then(r => r.ok ? r.json() : null)
+                fetch('/api/products?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.json() : null),
+                fetch('/api/settings?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.json() : null)
             ]);
 
             if (resSet) {
@@ -1812,46 +1812,71 @@
     setupFileUpload(document.getElementById('frontFileInput'), pImgUrl, frontPreview, document.getElementById('frontUploadStatus'));
     setupFileUpload(document.getElementById('backFileInput'), pBackUrl, backPreview, document.getElementById('backUploadStatus'));
 
-    // Video Upload (Direct binary streaming + size check to prevent crashes on mobile)
-    document.getElementById('videoFileInput').addEventListener('change', async (e) => {
+    // Video Upload (Direct binary streaming + live progress bar for mobile & desktop)
+    document.getElementById('videoFileInput').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
         const statusEl = document.getElementById('videoUploadStatus');
 
         const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-        if (file.size > 40 * 1024 * 1024) {
-            alert(`Selected video is ${sizeMB}MB. For best performance, please upload a video under 40MB, or paste a video/YouTube link in the box.`);
+        if (file.size > 120 * 1024 * 1024) {
+            alert(`Selected video is ${sizeMB}MB. Maximum allowed video size is 120MB.\nTip: You can also paste an MP4 or YouTube link.`);
             e.target.value = '';
             return;
         }
 
-        statusEl.textContent = `Uploading video (${sizeMB}MB)...`;
-        statusEl.style.color = 'var(--gold)';
+        const ext = '.' + (file.name.split('.').pop() || 'mp4').toLowerCase();
+        statusEl.innerHTML = `<span style="color:var(--gold);">Uploading: 0% (${sizeMB}MB)...</span>`;
 
-        try {
-            const ext = '.' + (file.name.split('.').pop() || 'mp4');
-            const res = await fetch('/api/upload-video', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': file.type || 'video/mp4',
-                    'x-file-ext': ext
-                },
-                body: file
-            });
-            const data = await res.json();
-            if (data.url) {
-                pVideoUrl.value = data.url;
-                updateVideoPreview(data.url);
-                statusEl.textContent = '✓ Video Ready';
-                statusEl.style.color = 'var(--success)';
-            } else {
-                throw new Error(data.error || 'Upload failed');
+        const xhr = new XMLHttpRequest();
+        // Use query params to prevent any custom header CORS preflight issues on mobile
+        const uploadUrl = `/api/upload-video?ext=${encodeURIComponent(ext)}&name=${encodeURIComponent(file.name || 'video.mp4')}`;
+        xhr.open('POST', uploadUrl, true);
+        xhr.timeout = 600000; // 10 minutes timeout
+
+        xhr.upload.onprogress = (pe) => {
+            if (pe.lengthComputable) {
+                const percent = Math.round((pe.loaded / pe.total) * 100);
+                const loadedMB = (pe.loaded / (1024 * 1024)).toFixed(1);
+                statusEl.innerHTML = `<span style="color:var(--gold); font-weight:500;">Uploading: <b>${percent}%</b> (${loadedMB} / ${sizeMB}MB)...</span>`;
             }
-        } catch (err) {
-            statusEl.textContent = 'Upload failed. You can paste a video URL below.';
-            statusEl.style.color = 'var(--ruby)';
-            alert('Video upload error: ' + err.message + '\nTip: You can also paste an MP4 URL or YouTube link into the Video URL field.');
-        }
+        };
+
+        xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data.url) {
+                        pVideoUrl.value = data.url;
+                        updateVideoPreview(data.url);
+                        statusEl.innerHTML = `<span style="color:var(--success); font-weight:600;">✓ Video Ready (${sizeMB}MB)</span>`;
+                    } else {
+                        throw new Error(data.error || 'Upload failed');
+                    }
+                } catch (err) {
+                    statusEl.innerHTML = `<span style="color:var(--ruby);">Error: ${err.message}</span>`;
+                    alert('Video upload error: ' + err.message);
+                }
+            } else {
+                statusEl.innerHTML = `<span style="color:var(--ruby);">Upload failed (HTTP ${xhr.status})</span>`;
+                alert(`Upload failed with server status ${xhr.status}. You can also paste an MP4 URL or YouTube link.`);
+            }
+            e.target.value = '';
+        };
+
+        xhr.onerror = () => {
+            statusEl.innerHTML = `<span style="color:var(--ruby);">Network error during video upload.</span>`;
+            alert('Network error while uploading video from mobile.\nPlease verify your connection or paste a video URL.');
+            e.target.value = '';
+        };
+
+        xhr.ontimeout = () => {
+            statusEl.innerHTML = `<span style="color:var(--ruby);">Upload timed out.</span>`;
+            alert('Upload timed out. Please try uploading a shorter video or paste a video link.');
+            e.target.value = '';
+        };
+
+        xhr.send(file);
     });
 
     // Multi-File Gallery Upload (Auto compressed for mobile)
