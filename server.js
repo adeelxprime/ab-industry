@@ -172,6 +172,32 @@ const handler = async (req, res) => {
         }
     }
 
+    // POST /api/upload-video (Direct binary stream upload for video files without base64 memory bloat)
+    if (pathname === '/api/upload-video' && req.method === 'POST') {
+        try {
+            const rawExt = req.headers['x-file-ext'] || '.mp4';
+            const ext = rawExt.startsWith('.') ? rawExt.toLowerCase() : `.${rawExt.toLowerCase()}`;
+            const filename = `video_${Date.now()}_${Math.random().toString(36).substring(2, 7)}${ext}`;
+            const dest = path.join(UPLOADS_DIR, filename);
+
+            const fileStream = fs.createWriteStream(dest);
+            req.pipe(fileStream);
+
+            fileStream.on('finish', () => {
+                const publicUrl = `assets/images/${filename}`;
+                return sendJSON(res, 200, { success: true, url: publicUrl, filename });
+            });
+
+            fileStream.on('error', (err) => {
+                console.error('[Video Upload Error]:', err.message);
+                return sendJSON(res, 500, { error: 'Failed to save video file' });
+            });
+            return;
+        } catch (err) {
+            return sendJSON(res, 500, { error: err.message });
+        }
+    }
+
     // POST /api/upload (Base64 image or video upload)
     if (pathname === '/api/upload' && req.method === 'POST') {
         try {

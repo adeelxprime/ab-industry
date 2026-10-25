@@ -27,6 +27,26 @@ if (createClient && supabaseUrl && supabaseKey && !supabaseUrl.includes('your-pr
 }
 
 // Local JSON Helpers
+let memoryCache = {
+    products: null,
+    productsTime: 0,
+    settings: null,
+    settingsTime: 0
+};
+const CACHE_TTL_MS = 15000;
+
+function invalidateCache() {
+    memoryCache.products = null;
+    memoryCache.settings = null;
+}
+
+function withTimeout(promise, ms = 2500) {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Database timeout (' + ms + 'ms)')), ms))
+    ]);
+}
+
 function readLocalJSON(file, fallback = []) {
     try {
         if (!fs.existsSync(file)) return fallback;
@@ -47,20 +67,26 @@ function writeLocalJSON(file, data) {
 
 // ================= PRODUCT METHODS =================
 async function getProducts() {
+    if (memoryCache.products && (Date.now() - memoryCache.productsTime < CACHE_TTL_MS)) {
+        return memoryCache.products;
+    }
     if (isSupabaseActive && supabase) {
         try {
-            const { data, error } = await supabase
+            const query = supabase
                 .from('products')
                 .select('*')
                 .order('created_at', { ascending: true });
 
+            const { data, error } = await withTimeout(query, 2500);
+
             if (!error && Array.isArray(data) && data.length > 0) {
                 // Map snake_case or standard fields
-                return data.map(item => ({
+                const prods = data.map(item => ({
                     id: item.id,
                     n: item.n,
                     pr: item.pr,
                     priceNum: item.price_num || parseInt(String(item.pr).replace(/[^\d]/g, ''), 10) || 0,
+                    sizes: item.sizes || 'S, M, L, XL, XXL',
                     cat: item.cat,
                     catName: item.cat_name || (item.cat === 'new' ? 'MEN’S COLLECTION' : 'WOMEN’S COLLECTION'),
                     b: item.b || '',
@@ -77,6 +103,9 @@ async function getProducts() {
                     stock: item.stock || 'In Stock',
                     d: item.d || ''
                 }));
+                memoryCache.products = prods;
+                memoryCache.productsTime = Date.now();
+                return prods;
             }
             if (error) console.error('[Supabase Error] getProducts:', error.message);
         } catch (err) {
@@ -84,7 +113,10 @@ async function getProducts() {
         }
     }
     // Fallback to local
-    return readLocalJSON(PRODUCTS_FILE, []);
+    const local = readLocalJSON(PRODUCTS_FILE, []);
+    memoryCache.products = local;
+    memoryCache.productsTime = Date.now();
+    return local;
 }
 
 async function createProduct(prod) {
@@ -152,6 +184,7 @@ async function createProduct(prod) {
     const local = readLocalJSON(PRODUCTS_FILE, []);
     local.push(newProduct);
     writeLocalJSON(PRODUCTS_FILE, local);
+    invalidateCache();
 
     return newProduct;
 }
@@ -212,6 +245,7 @@ async function updateProduct(id, updates) {
 
     local[index] = updated;
     writeLocalJSON(PRODUCTS_FILE, local);
+    invalidateCache();
     return updated;
 }
 
@@ -232,27 +266,35 @@ async function deleteProduct(id) {
     const local = readLocalJSON(PRODUCTS_FILE, []);
     const filtered = local.filter(p => String(p.id) !== String(id));
     writeLocalJSON(PRODUCTS_FILE, filtered);
+    invalidateCache();
     return true;
 }
 
 // ================= SETTINGS METHODS =================
 async function getSettings() {
+    if (memoryCache.settings && (Date.now() - memoryCache.settingsTime < CACHE_TTL_MS)) {
+        return memoryCache.settings;
+    }
     if (isSupabaseActive && supabase) {
         try {
-            const { data, error } = await supabase
+            const query = supabase
                 .from('settings')
                 .select('*')
                 .eq('key', 'general')
                 .single();
 
+            const { data, error } = await withTimeout(query, 2500);
+
             if (!error && data && data.value) {
+                memoryCache.settings = data.value;
+                memoryCache.settingsTime = Date.now();
                 return data.value;
             }
         } catch (e) {
             console.error('[Supabase Exception] getSettings:', e.message);
         }
     }
-    return readLocalJSON(SETTINGS_FILE, {
+    const local = readLocalJSON(SETTINGS_FILE, {
         whatsapp: '923077536327',
         brandName: 'AB INDUSTRY',
         tagline: 'WEAR YOUR STYLE',
@@ -264,6 +306,9 @@ async function getSettings() {
             { id: 'sig', name: 'WOMEN’S COLLECTION', badge: 'WOMEN' }
         ]
     });
+    memoryCache.settings = local;
+    memoryCache.settingsTime = Date.now();
+    return local;
 }
 
 async function saveSettings(settings) {
@@ -283,6 +328,7 @@ async function saveSettings(settings) {
         }
     }
     writeLocalJSON(SETTINGS_FILE, settings);
+    invalidateCache();
     return settings;
 }
 

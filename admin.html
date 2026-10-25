@@ -762,11 +762,94 @@
         }
         .auth-box button:hover { background: var(--gold); }
 
+        /* Mobile & Tablet Responsiveness */
+        .cat-view-grid { display: grid; grid-template-columns: 360px 1fr; gap: 24px; }
+        .db-view-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+        @media(max-width: 900px) {
+            .cat-view-grid, .db-view-grid { grid-template-columns: 1fr !important; gap: 18px !important; }
+        }
+
         @media(max-width: 768px) {
-            .form-grid { grid-template-columns: 1fr; }
+            body { padding: 0; }
+            header { flex-direction: column; gap: 14px; text-align: center; padding: 16px; }
+            .header-actions { width: 100%; justify-content: center; display: flex; gap: 10px; }
+            .brand-wrap { text-align: center; }
+
+            .admin-container { padding: 14px; }
+
+            .admin-nav {
+                display: flex;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                gap: 8px;
+                padding-bottom: 8px;
+                margin-bottom: 18px;
+                scrollbar-width: none;
+            }
+            .admin-nav::-webkit-scrollbar { display: none; }
+            .tab-btn {
+                flex-shrink: 0;
+                white-space: nowrap;
+                font-size: 11px;
+                padding: 10px 14px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                margin-bottom: 18px;
+            }
+            .stat-card { padding: 14px; }
+            .stat-card h4 { font-size: 10px; }
+            .stat-card .val { font-size: 22px; }
+
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+                margin-bottom: 18px;
+            }
+            .toolbar .search-box { width: 100%; min-width: 0; }
+            .toolbar .filter-select { width: 100%; }
+            .toolbar .btn-add { width: 100%; justify-content: center; padding: 14px; }
+
+            .table-wrap {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                border-radius: var(--radius);
+            }
+            table { min-width: 650px; }
+
+            .modal-overlay {
+                padding: 10px;
+                align-items: flex-end;
+            }
+            .modal-box {
+                max-width: 100%;
+                max-height: 94vh;
+                border-radius: 14px 14px 0 0;
+            }
+            .modal-header { padding: 16px 18px; }
+            .modal-header h3 { font-size: 20px; }
+            .modal-body { padding: 16px; }
+            .modal-footer {
+                padding: 12px 18px;
+                flex-direction: column-reverse;
+                gap: 8px;
+            }
+            .modal-footer button { width: 100%; justify-content: center; padding: 14px; }
+
+            .form-grid { grid-template-columns: 1fr; gap: 14px; }
             .form-group.full { grid-column: span 1; }
-            header { flex-direction: column; gap: 14px; text-align: center; }
-            .toolbar { flex-direction: column; align-items: stretch; }
+
+            .settings-card { padding: 18px; }
+            .auth-box { width: 92%; max-width: 360px; padding: 28px 20px; }
+        }
+
+        @media(max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .gallery-previews { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
@@ -886,7 +969,7 @@
 
     <!-- CATEGORIES MANAGEMENT VIEW -->
     <div id="viewCategories" style="display: none;">
-        <div style="display: grid; grid-template-columns: 360px 1fr; gap: 24px;">
+        <div class="cat-view-grid">
             <!-- Create Category Card -->
             <div class="settings-card" style="margin: 0; max-width: 100%;">
                 <h3>Create New Category</h3>
@@ -1009,7 +1092,7 @@
 
     <!-- DATABASE & SUPABASE VIEW -->
     <div id="viewDatabase" style="display: none;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <div class="db-view-grid">
             <!-- Connection Settings -->
             <div class="settings-card" style="margin: 0; max-width: 100%;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
@@ -1648,88 +1731,141 @@
         videoPlayerContainer.innerHTML = '';
     }
 
-    // Single File Upload
+    // Client-side image compression (HTML5 Canvas) to prevent mobile memory & upload errors
+    function compressImage(file, maxDimension = 1200, quality = 0.84) {
+        return new Promise((resolve) => {
+            if (!file || !file.type || !file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result || '');
+                reader.onerror = () => resolve('');
+                reader.readAsDataURL(file);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    let w = img.width;
+                    let h = img.height;
+                    if (w > h) {
+                        if (w > maxDimension) {
+                            h = Math.round((h * maxDimension) / w);
+                            w = maxDimension;
+                        }
+                    } else {
+                        if (h > maxDimension) {
+                            w = Math.round((w * maxDimension) / h);
+                            h = maxDimension;
+                        }
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    const compressed = canvas.toDataURL('image/jpeg', quality);
+                    resolve(compressed);
+                };
+                img.onerror = () => resolve(e.target.result);
+                img.src = e.target.result;
+            };
+            reader.onerror = () => resolve('');
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Single File Upload (Auto compressed for mobile)
     function setupFileUpload(inputEl, urlInputEl, previewEl, statusEl) {
         inputEl.addEventListener('change', async () => {
             const file = inputEl.files[0];
             if (!file) return;
-            statusEl.textContent = 'Uploading...';
-            const reader = new FileReader();
-            reader.onload = async () => {
-                const base64 = reader.result;
-                try {
-                    const res = await fetch('/api/upload', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ image: base64 })
-                    });
-                    const data = await res.json();
-                    if (data.url) {
-                        urlInputEl.value = data.url;
-                        if (previewEl) previewEl.src = data.url;
-                        statusEl.textContent = '✓ Ready';
-                        statusEl.style.color = 'var(--success)';
-                    }
-                } catch (e) {
+            statusEl.textContent = 'Optimizing & uploading...';
+            statusEl.style.color = 'var(--gold)';
+            try {
+                const base64 = await compressImage(file, 1200, 0.84);
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: base64 })
+                });
+                const data = await res.json();
+                if (data.url) {
+                    urlInputEl.value = data.url;
+                    if (previewEl) previewEl.src = data.url;
+                    statusEl.textContent = '✓ Ready';
+                    statusEl.style.color = 'var(--success)';
+                } else {
                     urlInputEl.value = base64;
                     if (previewEl) previewEl.src = base64;
                     statusEl.textContent = '✓ Ready';
+                    statusEl.style.color = 'var(--success)';
                 }
-            };
-            reader.readAsDataURL(file);
+            } catch (e) {
+                statusEl.textContent = '✓ Ready';
+                statusEl.style.color = 'var(--success)';
+            }
         });
     }
 
     setupFileUpload(document.getElementById('frontFileInput'), pImgUrl, frontPreview, document.getElementById('frontUploadStatus'));
     setupFileUpload(document.getElementById('backFileInput'), pBackUrl, backPreview, document.getElementById('backUploadStatus'));
 
-    // Video Upload
+    // Video Upload (Direct binary streaming + size check to prevent crashes on mobile)
     document.getElementById('videoFileInput').addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
         const statusEl = document.getElementById('videoUploadStatus');
-        statusEl.textContent = 'Uploading video...';
-        const reader = new FileReader();
-        reader.onload = async () => {
-            const base64 = reader.result;
-            try {
-                const res = await fetch('/api/upload', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ video: base64 })
-                });
-                const data = await res.json();
-                if (data.url) {
-                    pVideoUrl.value = data.url;
-                    updateVideoPreview(data.url);
-                    statusEl.textContent = '✓ Video Ready';
-                    statusEl.style.color = 'var(--success)';
-                }
-            } catch (err) {
-                pVideoUrl.value = base64;
-                updateVideoPreview(base64);
+
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        if (file.size > 40 * 1024 * 1024) {
+            alert(`Selected video is ${sizeMB}MB. For best performance, please upload a video under 40MB, or paste a video/YouTube link in the box.`);
+            e.target.value = '';
+            return;
+        }
+
+        statusEl.textContent = `Uploading video (${sizeMB}MB)...`;
+        statusEl.style.color = 'var(--gold)';
+
+        try {
+            const ext = '.' + (file.name.split('.').pop() || 'mp4');
+            const res = await fetch('/api/upload-video', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': file.type || 'video/mp4',
+                    'x-file-ext': ext
+                },
+                body: file
+            });
+            const data = await res.json();
+            if (data.url) {
+                pVideoUrl.value = data.url;
+                updateVideoPreview(data.url);
                 statusEl.textContent = '✓ Video Ready';
+                statusEl.style.color = 'var(--success)';
+            } else {
+                throw new Error(data.error || 'Upload failed');
             }
-        };
-        reader.readAsDataURL(file);
+        } catch (err) {
+            statusEl.textContent = 'Upload failed. You can paste a video URL below.';
+            statusEl.style.color = 'var(--ruby)';
+            alert('Video upload error: ' + err.message + '\nTip: You can also paste an MP4 URL or YouTube link into the Video URL field.');
+        }
     });
 
-    // Multi-File Gallery Upload
+    // Multi-File Gallery Upload (Auto compressed for mobile)
     document.getElementById('multiFileInput').addEventListener('change', async (e) => {
         const files = Array.from(e.target.files);
         if (!files.length) return;
         const statusEl = document.getElementById('multiUploadStatus');
-        statusEl.textContent = `Uploading ${files.length} images...`;
+        statusEl.textContent = `Optimizing ${files.length} images...`;
+        statusEl.style.color = 'var(--gold)';
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            const base64 = await new Promise(resolve => {
-                const r = new FileReader();
-                r.onload = () => resolve(r.result);
-                r.readAsDataURL(file);
-            });
-
             try {
+                const base64 = await compressImage(file, 1200, 0.84);
                 const res = await fetch('/api/upload', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1738,6 +1874,7 @@
                 const data = await res.json();
                 currentGallery.push({ k: data.url || base64, l: file.name.replace(/\.[^.]+$/, '') });
             } catch (_) {
+                const base64 = await compressImage(file, 1000, 0.8);
                 currentGallery.push({ k: base64, l: 'Photo ' + (currentGallery.length + 1) });
             }
         }
@@ -1852,7 +1989,11 @@
             n, pr, sizes, cat, catName, inScroll, topPosition, sortOrder, b, c, fabric, pieces, stock, img, back, imgs, video, d
         };
 
+        saveProductBtn.disabled = true;
+        saveProductBtn.textContent = 'SAVING PRODUCT...';
+
         let saved = false;
+        let errorMessage = '';
         try {
             const url = id ? `/api/products/${id}` : '/api/products';
             const method = id ? 'PUT' : 'POST';
@@ -1861,15 +2002,25 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            if (res.ok) saved = true;
-        } catch (_) {}
+            if (res.ok) {
+                saved = true;
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                errorMessage = errData.error || `Server error (Status ${res.status})`;
+            }
+        } catch (err) {
+            errorMessage = err.message || 'Network connection failed.';
+        } finally {
+            saveProductBtn.disabled = false;
+            saveProductBtn.textContent = 'SAVE PRODUCT';
+        }
 
         if (saved) {
             showToast(id ? 'Product updated successfully!' : 'New product added to catalog!');
             closeModal();
             loadData();
         } else {
-            alert('Failed to save product. Please check your connection or server status.');
+            alert('Failed to save product: ' + errorMessage);
         }
     });
 
