@@ -268,12 +268,14 @@ const handler = async (req, res) => {
 
     // ================= HTML PAGES (FAST IN-MEMORY SERVING) =================
     // Admin Panel
-    if (pathname === '/admin' || pathname === '/admin.html') {
+    if (pathname === '/admin' || pathname === '/admin/' || pathname === '/admin.html' || pathname === '/admin/index.html') {
         try {
             const adminHtml = fs.readFileSync(path.join(__dirname, 'admin.html'), 'utf8');
             res.writeHead(200, {
                 'Content-Type': 'text/html; charset=utf-8',
-                'Cache-Control': 'no-cache, no-store, must-revalidate'
+                'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+                'Pragma': 'no-cache',
+                'Expires': '0'
             });
             return res.end(adminHtml);
         } catch (e) {
@@ -291,10 +293,18 @@ const handler = async (req, res) => {
             const prods = await db.getProducts();
             const set = await db.getSettings();
             if (prods && prods.length > 0) {
-                indexHtml = indexHtml.replace(/let items\s*=\s*\[[\s\S]*?\n\];/i, `let items = ${JSON.stringify(prods)};`);
+                if (indexHtml.includes('/* __ITEMS_START__ */')) {
+                    indexHtml = indexHtml.replace(/\/\* __ITEMS_START__ \*\/[\s\S]*?\/\* __ITEMS_END__ \*\//, `/* __ITEMS_START__ */ ${JSON.stringify(prods)} /* __ITEMS_END__ */`);
+                } else {
+                    indexHtml = indexHtml.replace(/let items\s*=\s*\[[\s\S]*?\n\];/i, `let items = ${JSON.stringify(prods)};`);
+                }
             }
             if (set) {
-                indexHtml = indexHtml.replace(/let currentStoreSettings\s*=\s*\{[\s\S]*?\n\};/i, `let currentStoreSettings = ${JSON.stringify(set)};`);
+                if (indexHtml.includes('/* __SETTINGS_START__ */')) {
+                    indexHtml = indexHtml.replace(/\/\* __SETTINGS_START__ \*\/[\s\S]*?\/\* __SETTINGS_END__ \*\//, `/* __SETTINGS_START__ */ ${JSON.stringify(set)} /* __SETTINGS_END__ */`);
+                } else {
+                    indexHtml = indexHtml.replace(/let currentStoreSettings\s*=\s*\{[\s\S]*?\n\};/i, `let currentStoreSettings = ${JSON.stringify(set)};`);
+                }
             }
             res.writeHead(200, {
                 'Content-Type': 'text/html; charset=utf-8',

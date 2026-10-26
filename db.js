@@ -8,8 +8,8 @@ const DATA_DIR = path.join(__dirname, 'data');
 const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 
-const supabaseUrl = process.env.SUPABASE_URL || 'https://ebwcldmageqkdroszcnj.supabase.co';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVid2NsZG1hZ2Vxa2Ryb3N6Y25qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNjY5MTAsImV4cCI6MjEwNzg0MjkxMH0.Q1YHfeZ4kMeOz4AxgVNhPSC0sAXIyJvEJsi1Wq5DTAI';
+const supabaseUrl = process.env.SUPABASE_URL || 'https://hyofyjsdfqplptyzsaer.supabase.co';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh5b2Z5anNkZnFwbHB0eXpzYWVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5MDg2OTMsImV4cCI6MjEwODQ4NDY5M30.WmNILjvwgWusJAJ-Mmc2FqwNMnp0QgqZ6h6-6iPU3nI';
 
 let supabase = null;
 let isSupabaseActive = false;
@@ -287,7 +287,7 @@ async function getSettings() {
         brandName: 'AB INDUSTRY',
         tagline: 'WEAR YOUR STYLE',
         instagram: '@abindustry',
-        currency: 'Rs',
+        currency: '$',
         adminPin: '1423',
         categories: [
             { id: 'new', name: 'MEN’S COLLECTION', badge: 'MEN' },
@@ -325,7 +325,8 @@ async function saveSettings(settings) {
 function getStatus() {
     return {
         isSupabaseActive,
-        supabaseUrl: process.env.SUPABASE_URL || null,
+        supabaseUrl: process.env.SUPABASE_URL || supabaseUrl || null,
+        supabaseKey: process.env.SUPABASE_ANON_KEY || supabaseKey || null,
         mode: isSupabaseActive ? 'supabase' : 'local'
     };
 }

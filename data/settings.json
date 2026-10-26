@@ -19,6 +19,18 @@
     {
       "id": "men-shorts---hoodie-combo",
       "name": "Men Shorts & Hoodie Combo"
+    },
+    {
+      "id": "men-s-hoodie",
+      "name": "Men's Hoodie"
+    },
+    {
+      "id": "women-hoodie",
+      "name": "Women Hoodie"
+    },
+    {
+      "id": "men-s-caps",
+      "name": "Men's Caps"
     }
   ]
 }

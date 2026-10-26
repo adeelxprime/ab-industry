@@ -580,10 +580,26 @@
             cursor: pointer;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
             font-weight: 500;
+            position: relative;
+            overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
         }
         .btn-upload-file:hover { border-color: var(--gold); color: var(--gold); }
+        .btn-upload-file input[type="file"] {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 5;
+            font-size: 0;
+        }
 
         /* Multiple Gallery Pictures */
         .gallery-grid {
@@ -1242,7 +1258,7 @@
                         <div class="upload-btn-wrap">
                             <label class="btn-upload-file">
                                 📁 Upload Front Image
-                                <input type="file" id="frontFileInput" accept="image/*" style="display:none;">
+                                <input type="file" id="frontFileInput" accept="image/*">
                             </label>
                             <span id="frontUploadStatus" style="font-size:12px; color:var(--mut); align-self:center;"></span>
                         </div>
@@ -1259,7 +1275,7 @@
                         <div class="upload-btn-wrap">
                             <label class="btn-upload-file">
                                 📁 Upload Back / Look 2 Image
-                                <input type="file" id="backFileInput" accept="image/*" style="display:none;">
+                                <input type="file" id="backFileInput" accept="image/*">
                             </label>
                             <span id="backUploadStatus" style="font-size:12px; color:var(--mut); align-self:center;"></span>
                         </div>
@@ -1278,7 +1294,7 @@
                         <div class="upload-btn-wrap">
                             <label class="btn-upload-file">
                                 📸 Select Multiple Images (Upload)
-                                <input type="file" id="multiFileInput" accept="image/*" multiple style="display:none;">
+                                <input type="file" id="multiFileInput" accept="image/*" multiple>
                             </label>
                             <button type="button" id="btnAddPhotoUrlBtn" class="btn-action">+ Add by URL</button>
                             <span id="multiUploadStatus" style="font-size:12px; color:var(--mut); align-self:center;"></span>
@@ -1295,9 +1311,9 @@
                         </div>
                         <input type="text" id="pVideoUrl" placeholder="e.g. assets/videos/... or https://... or YouTube link">
                         <div class="upload-btn-wrap">
-                            <label class="btn-upload-file" style="position:relative; cursor:pointer;">
+                            <label class="btn-upload-file">
                                 📹 Upload Video File (MP4/WebM)
-                                <input type="file" id="videoFileInput" accept="video/*" style="position:absolute;left:-9999px;opacity:0;width:1px;height:1px;">
+                                <input type="file" id="videoFileInput" accept="video/*">
                             </label>
                             <span id="videoUploadStatus" style="font-size:12px; color:var(--mut); align-self:center;"></span>
                         </div>
@@ -1825,7 +1841,14 @@
             return;
         }
 
-        const ext = '.' + (file.name.split('.').pop() || 'mp4').toLowerCase();
+        let ext = '.mp4';
+        if (file.name && file.name.lastIndexOf('.') > 0) {
+            ext = '.' + file.name.split('.').pop().toLowerCase();
+        } else if (file.type) {
+            if (file.type.includes('quicktime')) ext = '.mov';
+            else if (file.type.includes('webm')) ext = '.webm';
+            else ext = '.mp4';
+        }
         statusEl.innerHTML = `<span style="color:var(--gold);">Uploading: 0% (${sizeMB}MB)...</span>`;
 
         const xhr = new XMLHttpRequest();
@@ -2160,11 +2183,14 @@
             const data = await res.json();
             const pill = document.getElementById('dbStatusPill');
             const urlIn = document.getElementById('dbUrlInput');
+            const keyIn = document.getElementById('dbKeyInput');
+            if (data.supabaseUrl) urlIn.value = data.supabaseUrl;
+            if (data.supabaseKey) keyIn.value = data.supabaseKey;
+
             if (data.isSupabaseActive) {
                 pill.textContent = '● CONNECTED TO SUPABASE';
                 pill.style.background = '#dcfce7';
                 pill.style.color = '#15803d';
-                if (data.supabaseUrl) urlIn.value = data.supabaseUrl;
             } else {
                 pill.textContent = '● LOCAL DATABASE (OFFLINE)';
                 pill.style.background = '#fef3c7';
