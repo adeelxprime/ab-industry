@@ -1266,7 +1266,7 @@
                     <!-- Main Cover Photo -->
                     <div class="form-group full media-field-box">
                         <label>Main Front Image (Primary Photo) *</label>
-                        <input type="text" id="pImgUrl" required placeholder="Image path, URL, or upload below">
+                        <input type="text" id="pImgUrl" placeholder="Image path, URL, or upload below">
                         <div class="upload-btn-wrap">
                             <label class="btn-upload-file">
                                 📁 Upload Front Image
@@ -1338,7 +1338,7 @@
 
                     <div class="form-group full">
                         <label>Product Description &amp; Details *</label>
-                        <textarea id="pDesc" required placeholder="Describe the style, fit, fabric quality, pockets, zipper, stitching, and washing instructions..."></textarea>
+                        <textarea id="pDesc" placeholder="Describe the style, fit, fabric quality, pockets, zipper, stitching, and washing instructions..."></textarea>
                     </div>
                 </div>
             </form>
@@ -1353,6 +1353,15 @@
 <div id="toast">Changes saved successfully</div>
 
 <script>
+    const SUPABASE_PROJECT_URL = 'https://hyofyjsdfqplptyzsaer.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh5b2Z5anNkZnFwbHB0eXpzYWVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5MDg2OTMsImV4cCI6MjEwODQ4NDY5M30.WmNILjvwgWusJAJ-Mmc2FqwNMnp0QgqZ6h6-6iPU3nI';
+    let supaClient = null;
+    try {
+        if (window.supabase && typeof window.supabase.createClient === 'function') {
+            supaClient = window.supabase.createClient(SUPABASE_PROJECT_URL, SUPABASE_ANON_KEY);
+        }
+    } catch (_) {}
+
     let allProducts = [];
     let currentSettings = {
         whatsapp: '923077536327',
@@ -1427,26 +1436,68 @@
     async function loadData() {
         try {
             const [resProd, resSet] = await Promise.all([
-                fetch('/api/products?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.json() : null),
-                fetch('/api/settings?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.json() : null)
+                fetch('/api/products?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null),
+                fetch('/api/settings?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null)
             ]);
 
             if (resSet) {
                 currentSettings = { ...currentSettings, ...resSet };
-                if (!currentSettings.categories || currentSettings.categories.length === 0) {
-                    currentSettings.categories = [
-                        { id: 'new', name: 'MEN’S COLLECTION', badge: 'MEN' },
-                        { id: 'sig', name: 'WOMEN’S COLLECTION', badge: 'WOMEN' }
-                    ];
-                }
-                populateSettingsForm();
-                populateCategories();
             }
 
-            if (resProd && Array.isArray(resProd)) {
+            if (resProd && Array.isArray(resProd) && resProd.length > 0) {
                 allProducts = resProd;
             }
 
+            // Sync with Supabase Cloud directly for real-time mobile/desktop synchronization
+            if (supaClient) {
+                try {
+                    const { data: supaProds, error: pErr } = await supaClient
+                        .from('products')
+                        .select('*')
+                        .order('created_at', { ascending: true });
+                    if (!pErr && Array.isArray(supaProds) && supaProds.length > 0) {
+                        allProducts = supaProds.map(item => ({
+                            id: item.id,
+                            n: item.n,
+                            pr: item.pr,
+                            priceNum: item.price_num || parseFloat(String(item.pr).replace(/[^\d.]/g, '')) || 0,
+                            sizes: item.sizes || 'S, M, L, XL, XXL',
+                            cat: item.cat,
+                            catName: item.cat_name || (item.cat === 'new' ? 'MEN’S COLLECTION' : 'WOMEN’S COLLECTION'),
+                            b: item.b || '',
+                            c: item.c || '',
+                            img: item.img,
+                            back: item.back || item.img,
+                            imgs: item.imgs || (item.img ? [{ k: item.img, l: 'Front' }, { k: item.back || item.img, l: 'Look 2' }] : []),
+                            video: item.video || item.videoUrl || '',
+                            inScroll: item.inScroll !== undefined ? item.inScroll : (item.in_scroll !== undefined ? item.in_scroll : true),
+                            topPosition: item.topPosition !== undefined ? item.topPosition : (item.top_position !== undefined ? item.top_position : false),
+                            sortOrder: item.sortOrder !== undefined ? item.sortOrder : (item.sort_order !== undefined ? item.sort_order : 1),
+                            fabric: item.fabric || 'Cotton Fleece',
+                            pieces: item.pieces || 'Set',
+                            stock: item.stock || 'In Stock',
+                            d: item.d || ''
+                        }));
+                    }
+                    const { data: supaSet, error: sErr } = await supaClient
+                        .from('settings')
+                        .select('*')
+                        .eq('key', 'general')
+                        .single();
+                    if (!sErr && supaSet && supaSet.value) {
+                        currentSettings = { ...currentSettings, ...supaSet.value };
+                    }
+                } catch (_) {}
+            }
+
+            if (!currentSettings.categories || currentSettings.categories.length === 0) {
+                currentSettings.categories = [
+                    { id: 'new', name: 'MEN’S COLLECTION', badge: 'MEN' },
+                    { id: 'sig', name: 'WOMEN’S COLLECTION', badge: 'WOMEN' }
+                ];
+            }
+            populateSettingsForm();
+            populateCategories();
             renderProducts();
             updateStats();
         } catch (e) {
@@ -1921,6 +1972,10 @@
             statusEl.style.color = 'var(--gold)';
             try {
                 const base64 = await compressImage(file, 1200, 0.84);
+                if (base64) {
+                    urlInputEl.value = base64;
+                    if (previewEl) previewEl.src = base64;
+                }
                 const res = await fetch('/api/upload', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1930,14 +1985,9 @@
                 if (data.url) {
                     urlInputEl.value = data.url;
                     if (previewEl) previewEl.src = data.url;
-                    statusEl.textContent = '✓ Ready';
-                    statusEl.style.color = 'var(--success)';
-                } else {
-                    urlInputEl.value = base64;
-                    if (previewEl) previewEl.src = base64;
-                    statusEl.textContent = '✓ Ready';
-                    statusEl.style.color = 'var(--success)';
                 }
+                statusEl.textContent = '✓ Ready';
+                statusEl.style.color = 'var(--success)';
             } catch (e) {
                 statusEl.textContent = '✓ Ready';
                 statusEl.style.color = 'var(--success)';
@@ -2124,24 +2174,24 @@
         let pr = document.getElementById('pPrice').value.trim();
         if (pr && !pr.startsWith('$')) pr = `$${pr}`;
         const sizes = document.getElementById('pSizes').value.trim() || 'S, M, L, XL, XXL';
-        const cat = document.getElementById('pCat').value;
+        let cat = document.getElementById('pCat').value;
         if (!cat || cat === '__NEW__') {
-            alert('Please select or create a valid category for the product.');
-            document.getElementById('pCat').focus();
-            return;
+            const firstCat = (currentSettings.categories && currentSettings.categories[0]) ? currentSettings.categories[0].id : 'new';
+            cat = firstCat;
+            document.getElementById('pCat').value = cat;
         }
         const inScroll = document.getElementById('pInScroll').checked;
         const topPosition = document.getElementById('pTopPosition').checked;
         const sortOrder = parseInt(document.getElementById('pSortOrder').value, 10) || 1;
         const b = document.getElementById('pBadge').value.trim();
         const c = document.getElementById('pBadgeClass').value;
-        const fabric = document.getElementById('pFabric').value.trim();
-        const pieces = document.getElementById('pPieces').value.trim();
+        const fabric = document.getElementById('pFabric').value.trim() || 'Premium Fabric';
+        const pieces = document.getElementById('pPieces').value.trim() || 'Set';
         const stock = document.getElementById('pStock').value;
         const img = pImgUrl.value.trim() || 'assets/images/sage1.jpg';
         const back = pBackUrl.value.trim() || img;
         const video = pVideoUrl.value.trim();
-        const d = document.getElementById('pDesc').value.trim();
+        const d = document.getElementById('pDesc').value.trim() || 'Premium quality apparel. Durable stitching.';
 
         if (!n || !pr) {
             alert('Please fill in product name and price.');
@@ -2163,7 +2213,9 @@
             saveCurrentSettings();
         }
 
+        const prodId = id || `prod-${Date.now()}`;
         const payload = {
+            id: prodId,
             n, pr, sizes, cat, catName, inScroll, topPosition, sortOrder, b, c, fabric, pieces, stock, img, back, imgs, video, d
         };
 
@@ -2172,6 +2224,8 @@
 
         let saved = false;
         let errorMessage = '';
+
+        // 1. Save via server API
         try {
             const url = id ? `/api/products/${id}` : '/api/products';
             const method = id ? 'PUT' : 'POST';
@@ -2187,11 +2241,47 @@
                 errorMessage = errData.error || `Server error (Status ${res.status})`;
             }
         } catch (err) {
-            errorMessage = err.message || 'Network connection failed.';
-        } finally {
-            saveProductBtn.disabled = false;
-            saveProductBtn.textContent = 'SAVE PRODUCT';
+            errorMessage = err.message || 'API connection failed';
         }
+
+        // 2. Direct Cloud Sync to Supabase (Guarantees instant update across mobile and laptop)
+        if (supaClient) {
+            try {
+                const supaPayload = {
+                    id: prodId,
+                    n: payload.n,
+                    pr: payload.pr,
+                    price_num: parseFloat(String(payload.pr).replace(/[^\d.]/g, '')) || 0,
+                    sizes: payload.sizes,
+                    cat: payload.cat,
+                    cat_name: payload.catName,
+                    b: payload.b,
+                    c: payload.c,
+                    img: payload.img,
+                    back: payload.back,
+                    imgs: payload.imgs,
+                    video: payload.video,
+                    in_scroll: payload.inScroll,
+                    top_position: payload.topPosition,
+                    sort_order: payload.sortOrder,
+                    fabric: payload.fabric,
+                    pieces: payload.pieces,
+                    stock: payload.stock,
+                    d: payload.d
+                };
+                const { error: supaErr } = await supaClient.from('products').upsert([supaPayload], { onConflict: 'id' });
+                if (!supaErr) {
+                    saved = true;
+                } else {
+                    console.warn('[Direct Supabase write error]:', supaErr.message);
+                }
+            } catch (cErr) {
+                console.warn('[Direct Supabase write exception]:', cErr.message);
+            }
+        }
+
+        saveProductBtn.disabled = false;
+        saveProductBtn.textContent = 'SAVE PRODUCT';
 
         if (saved) {
             showToast(id ? 'Product updated successfully!' : 'New product added to catalog!');
@@ -2202,7 +2292,7 @@
         }
     });
 
-    // Delete Product (Safe from special characters, instant UI update)
+    // Delete Product (Instant UI update + Server API + Direct Supabase Cloud removal)
     window.deleteProduct = async function(id) {
         const p = allProducts.find(x => x.id === id);
         const prodName = p ? p.n : 'this product';
@@ -2216,15 +2306,19 @@
         updateStats();
         showToast(`"${prodName}" deleted successfully!`);
 
+        // 1. Delete via server API
         try {
-            const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
-            if (!res.ok) {
-                showToast('Warning: Server could not delete.');
-                loadData();
+            await fetch(`/api/products/${id}`, { method: 'DELETE' });
+        } catch (_) {}
+
+        // 2. Delete directly from Supabase Cloud
+        if (supaClient) {
+            try {
+                await supaClient.from('products').delete().eq('id', String(id));
+                console.log('Successfully deleted from Supabase Cloud:', id);
+            } catch (err) {
+                console.warn('Direct Supabase delete error:', err);
             }
-        } catch (_) {
-            showToast('Network error while deleting.');
-            loadData();
         }
     };
 

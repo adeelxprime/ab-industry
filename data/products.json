@@ -218,37 +218,6 @@
     "d": "Men 2-Piece Set - White Hoodie + Blue Baggy Jeans. Casual look, everyday comfort. Soft cotton blend hoodie with kangaroo pocket, drawstring hood, AB Industry logo. Durable blue baggy jeans with AB button, classic 5-pocket style.\n\nFabric: Hoodie - Soft Cotton Blend, Jeans - Denim\nFeatures: Breathable Fabric, Durable Stitching, All Day Comfort\nColors: Hoodie White / Jeans Blue\nSize Range: S, M, L"
   },
   {
-    "id": "prod-1792955687471",
-    "n": "Men's Hoodie Black & White Diagonal Color Block - Premium Cotton Blend - AB Industry",
-    "pr": "$188",
-    "priceNum": 188,
-    "sizes": "S, M, L, XL, XXL",
-    "cat": "men-s-hoodie",
-    "catName": "Men's Hoodie",
-    "b": "",
-    "c": "b-new",
-    "img": "assets/images/p_prod-1792955687471_front.jpg",
-    "back": "assets/images/p_prod-1792955687471_back.jpg",
-    "imgs": [
-      {
-        "k": "assets/images/p_prod-1792955687471_g0.jpg",
-        "l": "Front"
-      },
-      {
-        "k": "assets/images/p_prod-1792955687471_g1.jpg",
-        "l": "Look 2"
-      }
-    ],
-    "video": "",
-    "inScroll": true,
-    "topPosition": false,
-    "sortOrder": 7,
-    "fabric": "Premium Cotton Blend - Soft, Breathable, Durable & Long Lasting",
-    "pieces": "Set",
-    "stock": "In Stock",
-    "d": "Men's Hoodie Black & White Combined - Diagonal Color Block Design, Style Comfort Everyday Wear. Front & Back View, AB Industry Logo, Kangaroo Pocket, Adjustable Hood, Ribbed Cuffs.\n\nFabric: Premium Cotton Blend - Soft, Breathable, Durable & Long Lasting\nColor: Black & White Combined\nAvailable Sizes: S, M, L, XL\n\n*Size Chart:*\n- S: Chest 42, Length 27, Shoulder 17, Sleeve 25\n- M: Chest 44, Length 28, Shoulder 18, Sleeve 26\n- L: Chest 46, Length 29, Shoulder 19, Sleeve 27\n- XL: Chest 48, Length 30, Shoulder 20, Sleeve 28"
-  },
-  {
     "id": "prod-1792956516153",
     "n": "Men's Hoodie Black & White Diagonal Color Block - Premium Cotton Blend",
     "pr": "$188",
@@ -290,7 +259,7 @@
     "b": "",
     "c": "b-new",
     "img": "assets/images/p_prod-1792984353436_front.jpg",
-    "back": "assets/images/p_prod-1792984353436_back.jpg",
+    "back": "assets/images/p_prod-1792984353436_front.jpg",
     "imgs": [
       {
         "k": "assets/images/p_prod-1792984353436_g0.jpg",
@@ -434,5 +403,59 @@
     "pieces": "Set",
     "stock": "In Stock",
     "d": "Men's Tracksuit White & Blue - Sporty Look Premium Quality \n\nColor: White & Blue\nIncludes: 2 Piece - Jacket + Trouser\n\nFabric: Premium Breathable Fabric - Lightweight, Durable & Long Lasting\nFeatures:\n- Full Zip Jacket with Ribbed Cuffs & Hem\n- Side Stripes Design on Sleeves & Pants\n- Side Pockets\n- AB Industry Logo on Chest & Trouser\n- Perfect Fit for Freedom of Movement\n\n*Best For:* Sports, Gym, Travel, Casual Wear\n\n*Size Chart (USA) - Inches:*\n- S: Chest 34-36, Waist 28-30, Hip 34-36, Top Length 27.5, Pant Length 40\n- M: Chest 38-40, Waist 32-34, Hip 38-40, Top Length 28.5, Pant Length 41\n- L: Chest 42-44, Waist 36-38, Hip 42-44, Top Length 29.5, Pant Length 42\n- XL: Chest 46-48, Waist 40-42, Hip 46-48, Top Length 30.5, Pant Length 43\n- XXL: Chest 50-52, Waist 44-46, Hip 50-52, Top Length 31.5, Pant Length 44"
+  },
+  {
+    "id": "prod-1793038163342",
+    "n": "Cap Red Color - Premium Embroidery Adjustable Strap",
+    "pr": "$50",
+    "priceNum": 50,
+    "sizes": "S, M, L, XL, XXL",
+    "cat": "men-s-caps",
+    "catName": "Men's Caps",
+    "b": "",
+    "c": "b-new",
+    "img": "assets/images/p_prod-1793038163342_front.jpg",
+    "back": "assets/images/p_prod-1793038163342_front.jpg",
+    "imgs": [
+      {
+        "k": "assets/images/p_prod-1793038163342_g0.jpg",
+        "l": "1793038015660"
+      }
+    ],
+    "video": "",
+    "inScroll": true,
+    "topPosition": false,
+    "sortOrder": 8,
+    "fabric": "Premium Fabric",
+    "pieces": "Set",
+    "stock": "In Stock",
+    "d": "Premium quality apparel. Durable stitching."
+  },
+  {
+    "id": "prod-1793039227046",
+    "n": "Cap Red Color - Premium Embroidery Adjustable Strap",
+    "pr": "$50",
+    "priceNum": 50,
+    "sizes": "S, M, L, XL, XXL",
+    "cat": "new",
+    "catName": "MEN’S COLLECTION",
+    "b": "",
+    "c": "b-new",
+    "img": "assets/images/p_prod-1793039227046_front.jpg",
+    "back": "assets/images/p_prod-1793039227046_front.jpg",
+    "imgs": [
+      {
+        "k": "assets/images/p_prod-1793039227046_g0.jpg",
+        "l": "WhatsApp Image 2026-10-26 at 11.24.07 PM"
+      }
+    ],
+    "video": "",
+    "inScroll": true,
+    "topPosition": false,
+    "sortOrder": 1,
+    "fabric": "Premium Fabric",
+    "pieces": "Set",
+    "stock": "In Stock",
+    "d": "Cap Red Color - Front & Back View with Detailed Features. AB Industry Embroidered Logo.\n\nMaterial: Premium Quality Cotton Twill - Durable & Comfortable\nColor: Red\nFeatures:\n- Premium Embroidery Logo\n- Curved Brim Design\n- Breathable Eyelets\n- Adjustable Strap with Metal Buckle\n- Comfortable Inner Sweatband\n\nSize Table:\n- S: 54-56 cm / 21-22 inch\n- M: 56-58 cm / 22-23 inch\n- L: 58-60 cm / 23-24 inch"
   }
 ]

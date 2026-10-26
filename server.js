@@ -294,16 +294,16 @@ const handler = async (req, res) => {
             const set = await db.getSettings();
             if (prods && prods.length > 0) {
                 if (indexHtml.includes('/* __ITEMS_START__ */')) {
-                    indexHtml = indexHtml.replace(/\/\* __ITEMS_START__ \*\/[\s\S]*?\/\* __ITEMS_END__ \*\//, `/* __ITEMS_START__ */ ${JSON.stringify(prods)} /* __ITEMS_END__ */`);
+                    indexHtml = indexHtml.replace(/\/\* __ITEMS_START__ \*\/[\s\S]*?\/\* __ITEMS_END__ \*\//, () => `/* __ITEMS_START__ */ ${JSON.stringify(prods)} /* __ITEMS_END__ */`);
                 } else {
-                    indexHtml = indexHtml.replace(/let items\s*=\s*\[[\s\S]*?\n\];/i, `let items = ${JSON.stringify(prods)};`);
+                    indexHtml = indexHtml.replace(/let items\s*=\s*\[[\s\S]*?\n\];/i, () => `let items = ${JSON.stringify(prods)};`);
                 }
             }
             if (set) {
                 if (indexHtml.includes('/* __SETTINGS_START__ */')) {
-                    indexHtml = indexHtml.replace(/\/\* __SETTINGS_START__ \*\/[\s\S]*?\/\* __SETTINGS_END__ \*\//, `/* __SETTINGS_START__ */ ${JSON.stringify(set)} /* __SETTINGS_END__ */`);
+                    indexHtml = indexHtml.replace(/\/\* __SETTINGS_START__ \*\/[\s\S]*?\/\* __SETTINGS_END__ \*\//, () => `/* __SETTINGS_START__ */ ${JSON.stringify(set)} /* __SETTINGS_END__ */`);
                 } else {
-                    indexHtml = indexHtml.replace(/let currentStoreSettings\s*=\s*\{[\s\S]*?\n\};/i, `let currentStoreSettings = ${JSON.stringify(set)};`);
+                    indexHtml = indexHtml.replace(/let currentStoreSettings\s*=\s*\{[\s\S]*?\n\};/i, () => `let currentStoreSettings = ${JSON.stringify(set)};`);
                 }
             }
             res.writeHead(200, {

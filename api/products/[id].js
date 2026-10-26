@@ -1,21 +1,23 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = process.env.SUPABASE_URL || 'https://ebwcldmageqkdroszcnj.supabase.co';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVid2NsZG1hZ2Vxa2Ryb3N6Y25qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNjY5MTAsImV4cCI6MjEwNzg0MjkxMH0.Q1YHfeZ4kMeOz4AxgVNhPSC0sAXIyJvEJsi1Wq5DTAI';
+const supabaseUrl = process.env.SUPABASE_URL || 'https://hyofyjsdfqplptyzsaer.supabase.co';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh5b2Z5anNkZnFwbHB0eXpzYWVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5MDg2OTMsImV4cCI6MjEwODQ4NDY5M30.WmNILjvwgWusJAJ-Mmc2FqwNMnp0QgqZ6h6-6iPU3nI';
 
 let supabase = null;
 if (supabaseUrl && supabaseKey) {
-    supabase = createClient(supabaseUrl, supabaseKey);
+    try {
+        supabase = createClient(supabaseUrl, supabaseKey);
+    } catch (_) {}
 }
 
 module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', '*');
     if (req.method === 'OPTIONS') return res.status(204).end();
 
     if (!supabase) {
-        return res.status(500).json({ error: 'Supabase not configured.' });
+        return res.status(500).json({ error: 'Supabase client not initialized.' });
     }
 
     const { id } = req.query;
@@ -24,19 +26,27 @@ module.exports = async function handler(req, res) {
     // PUT — update product
     if (req.method === 'PUT') {
         try {
-            const updates = req.body;
+            const updates = req.body || {};
             const updateData = {};
             if (updates.n !== undefined) updateData.n = updates.n;
             if (updates.pr !== undefined) {
-                updateData.pr = updates.pr;
-                updateData.price_num = parseInt(String(updates.pr).replace(/[^\d]/g, ''), 10) || 0;
+                let pr = String(updates.pr).trim();
+                if (!pr.startsWith('$')) pr = `$${pr}`;
+                updateData.pr = pr;
+                updateData.price_num = parseFloat(pr.replace(/[^\d.]/g, '')) || 0;
             }
+            if (updates.sizes !== undefined) updateData.sizes = updates.sizes;
             if (updates.cat !== undefined) updateData.cat = updates.cat;
             if (updates.catName !== undefined) updateData.cat_name = updates.catName;
             if (updates.b !== undefined) updateData.b = updates.b;
             if (updates.c !== undefined) updateData.c = updates.c;
             if (updates.img !== undefined) updateData.img = updates.img;
             if (updates.back !== undefined) updateData.back = updates.back;
+            if (updates.imgs !== undefined) updateData.imgs = updates.imgs;
+            if (updates.video !== undefined) updateData.video = updates.video;
+            if (updates.inScroll !== undefined) updateData.in_scroll = !!updates.inScroll;
+            if (updates.topPosition !== undefined) updateData.top_position = !!updates.topPosition;
+            if (updates.sortOrder !== undefined) updateData.sort_order = parseInt(updates.sortOrder, 10) || 1;
             if (updates.fabric !== undefined) updateData.fabric = updates.fabric;
             if (updates.pieces !== undefined) updateData.pieces = updates.pieces;
             if (updates.stock !== undefined) updateData.stock = updates.stock;

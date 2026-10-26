@@ -45,7 +45,7 @@ function writeLocalJSON(file, data) {
     }
 }
 
-// In-Memory Fast Cache (Always primed from local disk on boot)
+// In-Memory Fast Cache
 let memoryCache = {
     products: null,
     settings: null
@@ -62,42 +62,85 @@ function invalidateCache() {
     memoryCache.settings = readLocalJSON(SETTINGS_FILE, null);
 }
 
-// Non-blocking background initial sync from Supabase
-if (isSupabaseActive && supabase) {
-    supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: true })
-        .then(({ data, error }) => {
-            if (!error && Array.isArray(data) && data.length > 0) {
-                const prods = data.map(item => ({
-                    id: item.id,
-                    n: item.n,
-                    pr: item.pr,
-                    priceNum: item.price_num || parseInt(String(item.pr).replace(/[^\d]/g, ''), 10) || 0,
-                    sizes: item.sizes || 'S, M, L, XL, XXL',
-                    cat: item.cat,
-                    catName: item.cat_name || (item.cat === 'new' ? 'MEN’S COLLECTION' : 'WOMEN’S COLLECTION'),
-                    b: item.b || '',
-                    c: item.c || '',
-                    img: item.img,
-                    back: item.back || item.img,
-                    imgs: item.imgs || (item.img ? [{ k: item.img, l: 'Front' }, { k: item.back || item.img, l: 'Detail' }] : []),
-                    video: item.video || item.videoUrl || '',
-                    inScroll: item.inScroll !== undefined ? item.inScroll : (item.in_scroll !== undefined ? item.in_scroll : true),
-                    topPosition: item.topPosition !== undefined ? item.topPosition : (item.top_position !== undefined ? item.top_position : false),
-                    sortOrder: item.sortOrder !== undefined ? item.sortOrder : (item.sort_order !== undefined ? item.sort_order : 0),
-                    fabric: item.fabric || 'Cotton Fleece',
-                    pieces: item.pieces || '2 Piece Set',
-                    stock: item.stock || 'In Stock',
-                    d: item.d || ''
-                }));
-                memoryCache.products = prods;
-                writeLocalJSON(PRODUCTS_FILE, prods);
-                console.log('[Database] Supabase products synchronized to cache:', prods.length);
+// Safe update of index.html on disk using replacement function to avoid '$' mangling
+function updateIndexHtmlOnDisk(prods, settings) {
+    try {
+        const indexPath = path.join(__dirname, 'index.html');
+        if (!fs.existsSync(indexPath)) return;
+        let html = fs.readFileSync(indexPath, 'utf8');
+
+        if (prods && Array.isArray(prods)) {
+            if (html.includes('/* __ITEMS_START__ */')) {
+                html = html.replace(
+                    /\/\* __ITEMS_START__ \*\/[\s\S]*?\/\* __ITEMS_END__ \*\//,
+                    () => `/* __ITEMS_START__ */ ${JSON.stringify(prods, null, 2)} /* __ITEMS_END__ */`
+                );
             }
-        })
-        .catch(err => console.warn('[Database] Initial Supabase products sync skipped:', err.message));
+        }
+        if (settings) {
+            if (html.includes('/* __SETTINGS_START__ */')) {
+                html = html.replace(
+                    /\/\* __SETTINGS_START__ \*\/[\s\S]*?\/\* __SETTINGS_END__ \*\//,
+                    () => `/* __SETTINGS_START__ */ ${JSON.stringify(settings, null, 2)} /* __SETTINGS_END__ */`
+                );
+            }
+        }
+        fs.writeFileSync(indexPath, html, 'utf8');
+    } catch (e) {
+        console.warn('[Database] updateIndexHtmlOnDisk warning:', e.message);
+    }
+}
+
+// Non-blocking background sync from Supabase
+let lastProductsSync = 0;
+const SYNC_INTERVAL_MS = 2500; // Check Supabase every 2.5s when active
+
+async function fetchFromSupabaseIfActive() {
+    if (!isSupabaseActive || !supabase) return null;
+    try {
+        const { data, error } = await supabase
+            .from('products')
+            .select('*')
+            .order('created_at', { ascending: true });
+        if (error || !Array.isArray(data)) return null;
+
+        const prods = data.map(item => ({
+            id: item.id,
+            n: item.n,
+            pr: item.pr,
+            priceNum: item.price_num || parseFloat(String(item.pr).replace(/[^\d.]/g, '')) || 0,
+            sizes: item.sizes || 'S, M, L, XL, XXL',
+            cat: item.cat,
+            catName: item.cat_name || (item.cat === 'new' ? 'MEN’S COLLECTION' : 'WOMEN’S COLLECTION'),
+            b: item.b || '',
+            c: item.c || '',
+            img: item.img,
+            back: item.back || item.img,
+            imgs: item.imgs || (item.img ? [{ k: item.img, l: 'Front' }, { k: item.back || item.img, l: 'Look 2' }] : []),
+            video: item.video || item.videoUrl || '',
+            inScroll: item.inScroll !== undefined ? item.inScroll : (item.in_scroll !== undefined ? item.in_scroll : true),
+            topPosition: item.topPosition !== undefined ? item.topPosition : (item.top_position !== undefined ? item.top_position : false),
+            sortOrder: item.sortOrder !== undefined ? item.sortOrder : (item.sort_order !== undefined ? item.sort_order : 1),
+            fabric: item.fabric || 'Cotton Fleece',
+            pieces: item.pieces || 'Set',
+            stock: item.stock || 'In Stock',
+            d: item.d || ''
+        }));
+        memoryCache.products = prods;
+        writeLocalJSON(PRODUCTS_FILE, prods);
+        updateIndexHtmlOnDisk(prods);
+        lastProductsSync = Date.now();
+        return prods;
+    } catch (err) {
+        return null;
+    }
+}
+
+// Run initial background sync
+if (isSupabaseActive && supabase) {
+    fetchFromSupabaseIfActive().then(prods => {
+        if (prods) console.log('[Database] Supabase products synchronized to cache:', prods.length);
+    });
 
     supabase
         .from('settings')
@@ -108,14 +151,20 @@ if (isSupabaseActive && supabase) {
             if (!error && data && data.value) {
                 memoryCache.settings = data.value;
                 writeLocalJSON(SETTINGS_FILE, data.value);
+                updateIndexHtmlOnDisk(null, data.value);
                 console.log('[Database] Supabase settings synchronized to cache');
             }
         })
         .catch(err => console.warn('[Database] Initial Supabase settings sync skipped:', err.message));
 }
 
-// ================= PRODUCT METHODS (ULTRA-FAST LOCAL-FIRST) =================
-async function getProducts() {
+// ================= PRODUCT METHODS =================
+async function getProducts(forceSync = false) {
+    const now = Date.now();
+    if (isSupabaseActive && supabase && (forceSync || (now - lastProductsSync > SYNC_INTERVAL_MS))) {
+        const cloudProds = await fetchFromSupabaseIfActive();
+        if (cloudProds && cloudProds.length > 0) return cloudProds;
+    }
     if (memoryCache.products && Array.isArray(memoryCache.products) && memoryCache.products.length > 0) {
         return memoryCache.products;
     }
@@ -137,8 +186,8 @@ async function createProduct(prod) {
         catName: prod.catName || (prod.cat === 'new' ? 'MEN’S COLLECTION' : 'WOMEN’S COLLECTION'),
         b: prod.b || '',
         c: prod.c || (prod.b ? 'b-new' : ''),
-        img: prod.img || 'a1',
-        back: prod.back || prod.img || 'a2',
+        img: prod.img || 'assets/images/sage1.jpg',
+        back: prod.back || prod.img || 'assets/images/sage2.jpg',
         imgs: Array.isArray(prod.imgs) ? prod.imgs : (prod.img ? [{ k: prod.img, l: 'Front' }] : []),
         video: prod.video || prod.videoUrl || '',
         inScroll: prod.inScroll !== false,
@@ -150,43 +199,48 @@ async function createProduct(prod) {
         d: prod.d || 'Premium quality apparel. Durable stitching.'
     };
 
-    // 1. INSTANT LOCAL WRITE (< 1 millisecond response time)
+    // 1. Instant local write
     const local = readLocalJSON(PRODUCTS_FILE, []);
     local.push(newProduct);
     writeLocalJSON(PRODUCTS_FILE, local);
     memoryCache.products = local;
+    lastProductsSync = Date.now();
 
-    // 2. BACKGROUND ASYNC SUPABASE SYNC (Never freezes or delays the user)
+    // 2. Safe index.html sync on disk
+    updateIndexHtmlOnDisk(local);
+
+    // 3. Synchronous Supabase write
     if (isSupabaseActive && supabase) {
-        supabase
-            .from('products')
-            .insert([{
-                id: newProduct.id,
-                n: newProduct.n,
-                pr: newProduct.pr,
-                price_num: newProduct.priceNum,
-                sizes: newProduct.sizes,
-                cat: newProduct.cat,
-                cat_name: newProduct.catName,
-                b: newProduct.b,
-                c: newProduct.c,
-                img: newProduct.img,
-                back: newProduct.back,
-                imgs: newProduct.imgs,
-                video: newProduct.video,
-                in_scroll: newProduct.inScroll,
-                top_position: newProduct.topPosition,
-                sort_order: newProduct.sortOrder,
-                fabric: newProduct.fabric,
-                pieces: newProduct.pieces,
-                stock: newProduct.stock,
-                d: newProduct.d
-            }])
-            .then(({ error }) => {
-                if (error) console.error('[Supabase Async Insert Error]:', error.message);
-                else console.log('[Supabase Cloud Sync]: Inserted product', newProduct.id);
-            })
-            .catch(err => console.error('[Supabase Async Insert Exception]:', err.message));
+        try {
+            const { error } = await supabase
+                .from('products')
+                .insert([{
+                    id: newProduct.id,
+                    n: newProduct.n,
+                    pr: newProduct.pr,
+                    price_num: newProduct.priceNum,
+                    sizes: newProduct.sizes,
+                    cat: newProduct.cat,
+                    cat_name: newProduct.catName,
+                    b: newProduct.b,
+                    c: newProduct.c,
+                    img: newProduct.img,
+                    back: newProduct.back,
+                    imgs: newProduct.imgs,
+                    video: newProduct.video,
+                    in_scroll: newProduct.inScroll,
+                    top_position: newProduct.topPosition,
+                    sort_order: newProduct.sortOrder,
+                    fabric: newProduct.fabric,
+                    pieces: newProduct.pieces,
+                    stock: newProduct.stock,
+                    d: newProduct.d
+                }]);
+            if (error) console.error('[Supabase Insert Error]:', error.message);
+            else console.log('[Supabase Cloud Sync]: Inserted product', newProduct.id);
+        } catch (err) {
+            console.error('[Supabase Insert Exception]:', err.message);
+        }
     }
 
     return newProduct;
@@ -213,65 +267,75 @@ async function updateProduct(id, updates) {
         sortOrder: updates.sortOrder !== undefined ? updates.sortOrder : (local[index].sortOrder || 1)
     };
 
-    // 1. INSTANT LOCAL WRITE
+    // 1. Instant local write
     local[index] = updated;
     writeLocalJSON(PRODUCTS_FILE, local);
     memoryCache.products = local;
+    lastProductsSync = Date.now();
 
-    // 2. BACKGROUND ASYNC SUPABASE SYNC
+    // 2. Safe index.html sync on disk
+    updateIndexHtmlOnDisk(local);
+
+    // 3. Synchronous Supabase update
     if (isSupabaseActive && supabase) {
-        supabase
-            .from('products')
-            .update({
-                n: updated.n,
-                pr: updated.pr,
-                price_num: updated.priceNum,
-                sizes: updated.sizes,
-                cat: updated.cat,
-                cat_name: updated.catName,
-                b: updated.b,
-                c: updated.c,
-                img: updated.img,
-                back: updated.back,
-                imgs: updated.imgs,
-                video: updated.video,
-                in_scroll: updated.inScroll,
-                top_position: updated.topPosition,
-                sort_order: updated.sortOrder,
-                fabric: updated.fabric,
-                pieces: updated.pieces,
-                stock: updated.stock,
-                d: updated.d
-            })
-            .eq('id', String(id))
-            .then(({ error }) => {
-                if (error) console.error('[Supabase Async Update Error]:', error.message);
-                else console.log('[Supabase Cloud Sync]: Updated product', id);
-            })
-            .catch(err => console.error('[Supabase Async Update Exception]:', err.message));
+        try {
+            const { error } = await supabase
+                .from('products')
+                .update({
+                    n: updated.n,
+                    pr: updated.pr,
+                    price_num: updated.priceNum,
+                    sizes: updated.sizes,
+                    cat: updated.cat,
+                    cat_name: updated.catName,
+                    b: updated.b,
+                    c: updated.c,
+                    img: updated.img,
+                    back: updated.back,
+                    imgs: updated.imgs,
+                    video: updated.video,
+                    in_scroll: updated.inScroll,
+                    top_position: updated.topPosition,
+                    sort_order: updated.sortOrder,
+                    fabric: updated.fabric,
+                    pieces: updated.pieces,
+                    stock: updated.stock,
+                    d: updated.d
+                })
+                .eq('id', String(id));
+            if (error) console.error('[Supabase Update Error]:', error.message);
+            else console.log('[Supabase Cloud Sync]: Updated product', id);
+        } catch (err) {
+            console.error('[Supabase Update Exception]:', err.message);
+        }
     }
 
     return updated;
 }
 
 async function deleteProduct(id) {
-    // 1. INSTANT LOCAL WRITE
+    // 1. Instant local write
     const local = readLocalJSON(PRODUCTS_FILE, []);
     const filtered = local.filter(p => String(p.id) !== String(id));
     writeLocalJSON(PRODUCTS_FILE, filtered);
     memoryCache.products = filtered;
+    lastProductsSync = Date.now();
 
-    // 2. BACKGROUND ASYNC SUPABASE SYNC
+    // 2. Safe index.html sync on disk
+    updateIndexHtmlOnDisk(filtered);
+
+    // 3. Synchronous Supabase delete
     if (isSupabaseActive && supabase) {
-        supabase
-            .from('products')
-            .delete()
-            .eq('id', String(id))
-            .then(({ error }) => {
-                if (error) console.error('[Supabase Async Delete Error]:', error.message);
-                else console.log('[Supabase Cloud Sync]: Deleted product', id);
-            })
-            .catch(err => console.error('[Supabase Async Delete Exception]:', err.message));
+        try {
+            const { error } = await supabase
+                .from('products')
+                .delete()
+                .eq('id', String(id));
+            if (error) console.error('[Supabase Delete Error]:', error.message);
+            else console.log('[Supabase Cloud Sync]: Deleted product', id);
+        } catch (err) {
+            console.error('[Supabase Delete Exception]:', err.message);
+        }
     }
 
     return true;
@@ -299,24 +363,24 @@ async function getSettings() {
 }
 
 async function saveSettings(settings) {
-    // 1. INSTANT LOCAL WRITE
     writeLocalJSON(SETTINGS_FILE, settings);
     memoryCache.settings = settings;
 
-    // 2. BACKGROUND ASYNC SUPABASE SYNC
+    updateIndexHtmlOnDisk(null, settings);
+
     if (isSupabaseActive && supabase) {
-        supabase
-            .from('settings')
-            .upsert({
-                key: 'general',
-                value: settings,
-                updated_at: new Date().toISOString()
-            })
-            .then(({ error }) => {
-                if (error) console.error('[Supabase Async Save Settings Error]:', error.message);
-                else console.log('[Supabase Cloud Sync]: Saved settings');
-            })
-            .catch(err => console.error('[Supabase Async Save Settings Exception]:', err.message));
+        try {
+            await supabase
+                .from('settings')
+                .upsert({
+                    key: 'general',
+                    value: settings,
+                    updated_at: new Date().toISOString()
+                });
+            console.log('[Supabase Cloud Sync]: Saved settings');
+        } catch (err) {
+            console.error('[Supabase Save Settings Exception]:', err.message);
+        }
     }
 
     return settings;
@@ -346,6 +410,8 @@ async function configureSupabase(url, key) {
             const envPath = path.join(__dirname, '.env');
             const envContent = `SUPABASE_URL=${url}\nSUPABASE_ANON_KEY=${key}\nPORT=${process.env.PORT || 3000}\n`;
             fs.writeFileSync(envPath, envContent, 'utf8');
+
+            await fetchFromSupabaseIfActive();
 
             return {
                 success: true,
@@ -426,7 +492,7 @@ async function syncLocalToSupabase() {
             syncedCount,
             total: localProds.length,
             errors,
-            message: `Synced ${syncedCount}/${localProds.length} products. Some columns may need supabase_schema.sql run.`
+            message: `Synced ${syncedCount}/${localProds.length} products.`
         };
     }
 
@@ -447,5 +513,6 @@ module.exports = {
     saveSettings,
     getStatus,
     configureSupabase,
-    syncLocalToSupabase
+    syncLocalToSupabase,
+    updateIndexHtmlOnDisk
 };
