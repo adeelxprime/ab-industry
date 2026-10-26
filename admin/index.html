@@ -968,7 +968,8 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 36%;">Product &amp; Media</th>
+                        <th style="width: 70px; text-align: center;" title="Display Position (1 = First, 2 = Second...)"># Pos</th>
+                        <th style="width: 34%;">Product &amp; Media</th>
                         <th>Category</th>
                         <th>Price</th>
                         <th>Showcase Toggles</th>
@@ -1181,13 +1182,21 @@
                         <input type="text" id="pSizes" placeholder="e.g. S, M, L, XL, XXL">
                     </div>
 
-                    <div class="form-group">
-                        <label>Category *</label>
+                    <div class="form-group full" style="background:#faf8f5; padding:14px; border-radius:6px; border:1px solid #ebd9b7;">
+                        <label style="font-weight:700; color:#4a3b1a;">Product Category *</label>
                         <div style="display: flex; gap: 8px;">
-                            <select id="pCat" style="flex:1;">
+                            <select id="pCat" style="flex:1; font-weight:600; font-size:13px;">
                                 <!-- Populated dynamically from categories -->
                             </select>
-                            <button type="button" id="btnQuickAddCat" class="btn-action" title="Quick add category">+ New</button>
+                            <button type="button" id="btnQuickAddCat" class="btn-action" style="font-weight:600; background:#fff; border-color:#d4a337; color:#855e0d;" title="Quick add new category">+ New Category</button>
+                        </div>
+                        <div id="quickCatBox" style="display:none; margin-top:10px; padding:10px 12px; background:#fff; border:1px solid #d4a337; border-radius:6px;">
+                            <label style="font-size:11px; font-weight:700; color:#785c18; display:block; margin-bottom:4px;">Enter New Category Name:</label>
+                            <div style="display:flex; gap:6px;">
+                                <input type="text" id="quickCatInput" placeholder="e.g. Winter Wear, Tracksuits, Hoodies..." style="flex:1; padding:8px 10px; font-size:13px; border:1px solid #ccc; border-radius:4px;">
+                                <button type="button" id="btnConfirmQuickCat" class="btn-add" style="padding:8px 14px; font-size:12px; white-space:nowrap;">+ Create &amp; Select</button>
+                                <button type="button" id="btnCancelQuickCat" class="btn-action" style="padding:8px 12px;">✕</button>
+                            </div>
                         </div>
                     </div>
 
@@ -1210,9 +1219,12 @@
                                 </div>
                             </label>
 
-                            <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
-                                <label style="font-size: 11px; text-transform: uppercase; letter-spacing: .1em; font-weight: 600; color:#555;">Display Order Number:</label>
-                                <input type="number" id="pSortOrder" value="1" min="1" max="999" style="width: 80px; padding: 6px 10px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; background: #fdfaf3; padding: 10px 14px; border-radius: 6px; border: 1px solid #fae8b4;">
+                                <div>
+                                    <label style="font-size: 12px; font-weight: 700; color: #785c18; display: block; margin-bottom: 2px;">Display Position # (Order in Store)</label>
+                                    <div style="font-size: 11px; color: #8a6d25;">Set the position of this piece (1 = 1st piece, 2 = 2nd piece, 3 = 3rd piece etc.)</div>
+                                </div>
+                                <input type="number" id="pSortOrder" value="1" min="1" max="999" style="width: 70px; padding: 8px; font-weight: 700; text-align: center; font-size: 15px; border: 1px solid #d4a337; border-radius: 4px; background: #fff;">
                             </div>
                         </div>
                     </div>
@@ -1460,14 +1472,23 @@
         const cats = currentSettings.categories || [];
         // Update Filter Select
         const catFilter = document.getElementById('catFilter');
-        const currentFilterVal = catFilter.value;
-        catFilter.innerHTML = '<option value="all">All Categories</option>' + 
-            cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-        catFilter.value = currentFilterVal;
+        if (catFilter) {
+            const currentFilterVal = catFilter.value;
+            catFilter.innerHTML = '<option value="all">All Categories</option>' + 
+                cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            catFilter.value = currentFilterVal;
+        }
 
         // Update Modal Category Dropdown
         const pCat = document.getElementById('pCat');
-        pCat.innerHTML = cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        if (pCat) {
+            const currentSelected = pCat.value;
+            pCat.innerHTML = cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('') +
+                '<option value="__NEW__">+ Create New Category...</option>';
+            if (currentSelected && cats.some(c => c.id === currentSelected)) {
+                pCat.value = currentSelected;
+            }
+        }
 
         // Update Categories View Table
         const catTbody = document.getElementById('categoriesTableBody');
@@ -1489,17 +1510,29 @@
         }
     }
 
+    // Auto-fill slug in Categories tab as user types display name
+    const catNameInEl = document.getElementById('catNameInput');
+    if (catNameInEl) {
+        catNameInEl.addEventListener('input', (e) => {
+            const slugIn = document.getElementById('catSlugInput');
+            if (slugIn) {
+                slugIn.value = e.target.value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            }
+        });
+    }
+
     document.getElementById('categoryForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('catNameInput').value.trim();
-        let slug = document.getElementById('catSlugInput').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+        let slug = document.getElementById('catSlugInput').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/(^-|-$)/g, '');
         const badge = document.getElementById('catBadgeInput').value.trim();
 
-        if (!name || !slug) return;
+        if (!name) return;
+        if (!slug) slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
         const cats = currentSettings.categories || [];
         if (cats.some(c => c.id === slug)) {
-            alert('A category with this code/slug already exists.');
+            alert(`A category with code "${slug}" already exists.`);
             return;
         }
 
@@ -1527,19 +1560,77 @@
         showToast('Category deleted');
     };
 
-    document.getElementById('btnQuickAddCat').addEventListener('click', () => {
-        const name = prompt('Enter new Category Name (e.g. Winter Wear):');
-        if (!name || !name.trim()) return;
-        const slug = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '-');
-        const cats = currentSettings.categories || [];
-        if (!cats.some(c => c.id === slug)) {
-            cats.push({ id: slug, name: name.trim() });
-            currentSettings.categories = cats;
-            saveCurrentSettings().then(() => {
-                populateCategories();
-                document.getElementById('pCat').value = slug;
-                showToast(`Category "${name}" created!`);
-            });
+    // Quick Add Category Box in Product Modal
+    const quickCatBox = document.getElementById('quickCatBox');
+    const quickCatInput = document.getElementById('quickCatInput');
+    const btnQuickAddCat = document.getElementById('btnQuickAddCat');
+    const btnConfirmQuickCat = document.getElementById('btnConfirmQuickCat');
+    const btnCancelQuickCat = document.getElementById('btnCancelQuickCat');
+    const pCatSelect = document.getElementById('pCat');
+
+    pCatSelect.addEventListener('change', () => {
+        if (pCatSelect.value === '__NEW__') {
+            quickCatBox.style.display = 'block';
+            quickCatInput.value = '';
+            quickCatInput.focus();
+        } else {
+            quickCatBox.style.display = 'none';
+        }
+    });
+
+    btnQuickAddCat.addEventListener('click', () => {
+        quickCatBox.style.display = quickCatBox.style.display === 'none' ? 'block' : 'none';
+        if (quickCatBox.style.display === 'block') {
+            quickCatInput.value = '';
+            quickCatInput.focus();
+        }
+    });
+
+    btnCancelQuickCat.addEventListener('click', () => {
+        quickCatBox.style.display = 'none';
+        if (pCatSelect.value === '__NEW__') {
+            const first = (currentSettings.categories && currentSettings.categories[0]) ? currentSettings.categories[0].id : 'new';
+            pCatSelect.value = first;
+        }
+    });
+
+    async function handleAddQuickCategory() {
+        const name = quickCatInput.value.trim();
+        if (!name) {
+            alert('Please enter a category name (e.g. Winter Wear).');
+            quickCatInput.focus();
+            return;
+        }
+        let slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        if (!slug) slug = 'cat-' + Date.now();
+
+        if (!currentSettings.categories) currentSettings.categories = [];
+        const cats = currentSettings.categories;
+
+        const existing = cats.find(c => c.id === slug || c.name.toLowerCase() === name.toLowerCase());
+        if (existing) {
+            populateCategories();
+            pCatSelect.value = existing.id;
+            quickCatBox.style.display = 'none';
+            showToast(`Category "${existing.name}" selected!`);
+            return;
+        }
+
+        cats.push({ id: slug, name });
+        currentSettings.categories = cats;
+        populateCategories();
+        pCatSelect.value = slug;
+        quickCatBox.style.display = 'none';
+        showToast(`Category "${name}" created & selected!`);
+
+        saveCurrentSettings();
+    }
+
+    btnConfirmQuickCat.addEventListener('click', handleAddQuickCategory);
+    quickCatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddQuickCategory();
         }
     });
 
@@ -1557,15 +1648,18 @@
             return matchQ && matchCat;
         });
 
-        // Sort: topPosition items first, then sortOrder
+        // Sort: Display position #1, #2, #3... first, then topPosition
         filtered.sort((a, b) => {
+            const posA = Number(a.sortOrder) || 9999;
+            const posB = Number(b.sortOrder) || 9999;
+            if (posA !== posB) return posA - posB;
             if (a.topPosition && !b.topPosition) return -1;
             if (!a.topPosition && b.topPosition) return 1;
-            return (a.sortOrder || 999) - (b.sortOrder || 999);
+            return 0;
         });
 
         if (filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--mut);">No products found matching your filter.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 40px; color: var(--mut);">No products found matching your filter.</td></tr>`;
             return;
         }
 
@@ -1579,6 +1673,13 @@
 
             return `
                 <tr>
+                    <td style="text-align: center;">
+                        <input type="number" min="1" max="999" value="${p.sortOrder || 1}" 
+                               class="pos-number-input" 
+                               title="Click or type to change display position (1 = first, 2 = second...)"
+                               onchange="updateProductPosition('${p.id}', this.value)"
+                               style="width: 52px; text-align: center; padding: 6px 2px; font-weight: 700; border: 1px solid var(--border); border-radius: 4px; background: #fff; font-size: 13px; color: var(--gold); cursor: pointer;">
+                    </td>
                     <td>
                         <div class="prod-cell">
                             <div class="prod-thumb-wrap" onclick="editProduct('${p.id}')">
@@ -1613,13 +1714,32 @@
                     <td style="text-align: right;">
                         <div class="action-btns" style="justify-content: flex-end;">
                             <button class="btn-action" onclick="editProduct('${p.id}')">Edit</button>
-                            <button class="btn-action del" onclick="deleteProduct('${p.id}', '${p.n}')">Delete</button>
+                            <button class="btn-action del" onclick="deleteProduct('${p.id}')">Delete</button>
                         </div>
                     </td>
                 </tr>
             `;
         }).join('');
     }
+
+    window.updateProductPosition = async function(id, newPos) {
+        const posNum = parseInt(newPos, 10) || 1;
+        const p = allProducts.find(x => x.id === id);
+        if (!p) return;
+        p.sortOrder = posNum;
+        renderProducts();
+        showToast(`Position #${posNum} set for "${p.n.slice(0, 22)}..."`);
+
+        try {
+            await fetch(`/api/products/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sortOrder: posNum })
+            });
+        } catch (e) {
+            console.error('Failed to update position on server:', e);
+        }
+    };
 
     window.toggleTopPosition = async function(id, e) {
         if (e) e.stopPropagation();
@@ -2005,6 +2125,11 @@
         if (pr && !pr.startsWith('$')) pr = `$${pr}`;
         const sizes = document.getElementById('pSizes').value.trim() || 'S, M, L, XL, XXL';
         const cat = document.getElementById('pCat').value;
+        if (!cat || cat === '__NEW__') {
+            alert('Please select or create a valid category for the product.');
+            document.getElementById('pCat').focus();
+            return;
+        }
         const inScroll = document.getElementById('pInScroll').checked;
         const topPosition = document.getElementById('pTopPosition').checked;
         const sortOrder = parseInt(document.getElementById('pSortOrder').value, 10) || 1;
@@ -2031,7 +2156,12 @@
         }
 
         const catObj = (currentSettings.categories || []).find(x => x.id === cat);
-        const catName = catObj ? catObj.name : 'COLLECTION';
+        const catName = catObj ? catObj.name : cat.toUpperCase();
+
+        if (cat && !currentSettings.categories.some(x => x.id === cat)) {
+            currentSettings.categories.push({ id: cat, name: catName });
+            saveCurrentSettings();
+        }
 
         const payload = {
             n, pr, sizes, cat, catName, inScroll, topPosition, sortOrder, b, c, fabric, pieces, stock, img, back, imgs, video, d
@@ -2072,19 +2202,29 @@
         }
     });
 
-    // Delete Product
-    window.deleteProduct = async function(id, name) {
-        if (!confirm(`Are you sure you want to remove "${name}" from the catalog?`)) {
+    // Delete Product (Safe from special characters, instant UI update)
+    window.deleteProduct = async function(id) {
+        const p = allProducts.find(x => x.id === id);
+        const prodName = p ? p.n : 'this product';
+        if (!confirm(`Are you sure you want to remove "${prodName}" from the catalog?`)) {
             return;
         }
+
+        // Optimistic UI removal: disappears instantly
+        allProducts = allProducts.filter(x => x.id !== id);
+        renderProducts();
+        updateStats();
+        showToast(`"${prodName}" deleted successfully!`);
+
         try {
             const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                showToast(`"${name}" removed from catalog`);
+            if (!res.ok) {
+                showToast('Warning: Server could not delete.');
                 loadData();
             }
         } catch (_) {
-            alert('Error deleting product.');
+            showToast('Network error while deleting.');
+            loadData();
         }
     };
 
